@@ -205,7 +205,7 @@ public class WebWalker extends PScript {
         List<PathResult> pathResults;
         boolean farmCapeToSpiritTree = false;
 
-        boolean goingNearestBank = targetLocation.equals(new RSTile(0, 0, 0));
+        boolean goingNearestBank = targetLocation.equals(new RSTile(1, 1, 0));
 
         if (goingNearestBank) {
             log.info("Start: " + start + ", Destination: Nearest Bank");
@@ -543,7 +543,7 @@ public class WebWalker extends PScript {
             case MISC:
                 return new RSTile(config.catMisc().getWorldPoint());
             case NONE:
-                return new RSTile(0, 0, 0);
+                return new RSTile(1, 1, 0);
         }
 
         return null;

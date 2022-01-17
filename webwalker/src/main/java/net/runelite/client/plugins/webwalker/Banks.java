@@ -5,7 +5,7 @@ import net.runelite.api.coords.WorldPoint;
 
 @Getter
 public enum Banks {
-    NEAREST("", 0, 0, 0),
+    NEAREST("", 1, 1, 0),
     AL_KHARID("Al kharid", 3269, 3167, 0),
     ARCEUUS("Arceuus", 1624, 3745, 0),
     ARDOUGNE_NORTH("Ardougne north", 2616, 3332, 0),
