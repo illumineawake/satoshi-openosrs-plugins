@@ -60,7 +60,7 @@ public interface WebWalkerConfig extends Config {
             unhideValue = "BANKS"
     )
     default Banks catBanks() {
-        return Banks.NONE;
+        return Banks.NEAREST;
     }
 
     @ConfigItem(
