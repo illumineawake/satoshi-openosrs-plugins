@@ -1,5 +1,8 @@
 package net.runelite.client.plugins.webwalker;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Point;
@@ -9,32 +12,51 @@ import net.runelite.api.events.*;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.chat.ChatColorType;
+import net.runelite.client.chat.ChatMessageBuilder;
+import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.plugins.OPRSExternalPluginManager;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.plugins.paistisuite.PScript;
 import net.runelite.client.plugins.paistisuite.PaistiSuite;
 import net.runelite.client.plugins.paistisuite.api.PMenu;
 import net.runelite.client.plugins.paistisuite.api.PPlayer;
 import net.runelite.client.plugins.paistisuite.api.PUtils;
 import net.runelite.client.plugins.paistisuite.api.PWalking;
+import net.runelite.client.plugins.paistisuite.api.WebWalker.Teleports.Teleport;
 import net.runelite.client.plugins.paistisuite.api.WebWalker.WalkingCondition;
 import net.runelite.client.plugins.paistisuite.api.WebWalker.api_lib.DaxWalker;
 import net.runelite.client.plugins.paistisuite.api.WebWalker.api_lib.WebWalkerServerApi;
 import net.runelite.client.plugins.paistisuite.api.WebWalker.api_lib.models.*;
 import net.runelite.client.plugins.paistisuite.api.WebWalker.walker_engine.WalkerEngine;
+import net.runelite.client.plugins.paistisuite.api.WebWalker.walker_engine.WebWalkerDebugRenderer;
 import net.runelite.client.plugins.paistisuite.api.WebWalker.walker_engine.navigation_utils.SpiritTree;
 import net.runelite.client.plugins.paistisuite.api.WebWalker.walker_engine.navigation_utils.SpiritTreeManager;
 import net.runelite.client.plugins.paistisuite.api.WebWalker.wrappers.RSTile;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ColorUtil;
+import net.runelite.http.api.RuneLiteAPI;
+import okhttp3.HttpUrl;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.pf4j.Extension;
+import org.pf4j.PluginWrapper;
+import org.pf4j.update.PluginInfo;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.awt.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -46,7 +68,7 @@ import java.util.Set;
 @PluginDescriptor(
         name = "WebWalker",
         enabledByDefault = false,
-        description = "Walks around with DaxWalker. Special thanks to Manhattan, Illumine and Runemoro.",
+        description = "Walks around with DaxWalker. Special thanks to Satoshi Oda, Manhattan, Illumine and Runemoro.",
         tags = {"npcs", "items", "paisti", "satoshi"}
 )
 
@@ -66,6 +88,7 @@ public class WebWalker extends PScript {
 
     @Inject
     private OverlayManager overlayManager;
+
     @Inject
     private WebWalkerOverlay overlay;
 
@@ -81,6 +104,21 @@ public class WebWalker extends PScript {
     @Inject
     private ConfigManager configManager;
 
+    @Inject
+    private PluginManager pluginManager;
+
+    @Inject
+    private WebWalkerDebugRenderer webWalkerDebugRenderer;
+
+    @Inject
+    private OPRSExternalPluginManager oprsExternalPluginManager;
+
+    @Inject
+    private Gson gson;
+
+    @Inject
+    private ChatMessageManager chatMessageManager;
+
     @Provides
     WebWalkerConfig provideConfig(ConfigManager configManager) {
         return configManager.getConfig(WebWalkerConfig.class);
@@ -88,6 +126,11 @@ public class WebWalker extends PScript {
 
     @Override
     protected void startUp() {
+        Teleport.TeleportType.TELEPORT_SPELL.setMoveCost(config.teleportSpellCost());
+        Teleport.TeleportType.TELEPORT_SCROLL.setMoveCost(config.teleportScrollCost());
+        Teleport.TeleportType.NONRECHARABLE_TELE.setMoveCost(config.nonrechargableTeleCost());
+        Teleport.TeleportType.RECHARGABLE_TELE.setMoveCost(config.rechargableTeleCost());
+        Teleport.TeleportType.UNLIMITED_TELE.setMoveCost(config.unlimitedTeleportCost());
     }
 
     @Subscribe
@@ -96,29 +139,28 @@ public class WebWalker extends PScript {
 
     @Subscribe
     public void onMenuEntryAdded(MenuEntryAdded event) {
-        final Widget map = PUtils.getClient().getWidget(WidgetInfo.WORLD_MAP_VIEW);
+        final Widget map = client.getWidget(WidgetInfo.WORLD_MAP_VIEW);
 
         if (WalkerEngine.getInstance().isNavigating() && event.getOption().contains("Walk here")) {
-            PMenu.addEntry(event, ColorUtil.wrapWithColorTag("WebWalker", Color.cyan) + " stop walking");
+            PMenu.addEntry(event, client, ColorUtil.wrapWithColorTag("WebWalker", Color.cyan) + " stop walking");
             return;
         }
 
         if (map != null) {
-            if (map.getBounds().contains(PUtils.getClient().getMouseCanvasPosition().getX(), PUtils.getClient().getMouseCanvasPosition().getY())) {
-                PMenu.addEntry(event, ColorUtil.wrapWithColorTag("WebWalker", Color.cyan) + " Autowalk");
-                PMenu.addEntry(event, ColorUtil.wrapWithColorTag("WebWalker", Color.cyan));
+            if (map.getBounds().contains(client.getMouseCanvasPosition().getX(), client.getMouseCanvasPosition().getY())) {
+                PMenu.addEntry(event, client, ColorUtil.wrapWithColorTag("WebWalker", Color.cyan) + " Autowalk");
+                PMenu.addEntry(event, client, ColorUtil.wrapWithColorTag("WebWalker", Color.cyan));
             }
         }
     }
 
     @Subscribe
     public void onMenuOpened(MenuOpened event) {
-        lastMenuOpenedPoint = PUtils.getClient().getMouseCanvasPosition();
+        lastMenuOpenedPoint = client.getMouseCanvasPosition();
     }
 
     @Subscribe
     public void onMenuOptionClicked(MenuOptionClicked event) {
-
         if (event.getMenuOption().contains("stop walking")) {
             log.info("Clicked Stop Walking");
             requestStop();
@@ -126,7 +168,7 @@ public class WebWalker extends PScript {
         }
 
         if (event.getMenuOption().contains("Autowalk")) {
-            WorldPoint wp = calculateMapPoint(PUtils.getClient().isMenuOpen() ? lastMenuOpenedPoint : PUtils.getClient().getMouseCanvasPosition());
+            WorldPoint wp = calculateMapPoint(client.isMenuOpen() ? lastMenuOpenedPoint : client.getMouseCanvasPosition());
             allowTeleports = config.allowTeleports();
             targetLocation = new RSTile(wp);
             event.consume();
@@ -140,10 +182,10 @@ public class WebWalker extends PScript {
     }
 
     private WorldPoint calculateMapPoint(Point point) {
-        float zoom = PUtils.getClient().getRenderOverview().getWorldMapZoom();
-        RenderOverview renderOverview = PUtils.getClient().getRenderOverview();
+        float zoom = client.getRenderOverview().getWorldMapZoom();
+        RenderOverview renderOverview = client.getRenderOverview();
         final WorldPoint mapPoint = new WorldPoint(renderOverview.getWorldMapPosition().getX(), renderOverview.getWorldMapPosition().getY(), 0);
-        final Point middle = mapWorldPointToGraphicsPoint(mapPoint);
+        final Point middle = webWalkerDebugRenderer.mapWorldPointToGraphicsPoint(mapPoint);
 
         final int dx = (int) ((point.getX() - middle.getX()) / zoom);
         final int dy = (int) ((-(point.getY() - middle.getY())) / zoom);
@@ -151,91 +193,67 @@ public class WebWalker extends PScript {
         return mapPoint.dx(dx).dy(dy);
     }
 
-
-    private Point mapWorldPointToGraphicsPoint(WorldPoint worldPoint) {
-        RenderOverview ro = PUtils.getClient().getRenderOverview();
-
-        if (!ro.getWorldMapData().surfaceContainsPosition(worldPoint.getX(), worldPoint.getY())) {
-            return null;
-        }
-
-        float pixelsPerTile = ro.getWorldMapZoom();
-
-        Widget map = PUtils.getClient().getWidget(WidgetInfo.WORLD_MAP_VIEW);
-        if (map != null) {
-            Rectangle worldMapRect = map.getBounds();
-
-            int widthInTiles = (int) Math.ceil(worldMapRect.getWidth() / pixelsPerTile);
-            int heightInTiles = (int) Math.ceil(worldMapRect.getHeight() / pixelsPerTile);
-
-            Point worldMapPosition = ro.getWorldMapPosition();
-
-            //Offset in tiles from anchor sides
-            int yTileMax = worldMapPosition.getY() - heightInTiles / 2;
-            int yTileOffset = (yTileMax - worldPoint.getY() - 1) * -1;
-            int xTileOffset = worldPoint.getX() + widthInTiles / 2 - worldMapPosition.getX();
-
-            int xGraphDiff = ((int) (xTileOffset * pixelsPerTile));
-            int yGraphDiff = (int) (yTileOffset * pixelsPerTile);
-
-            //Center on tile.
-            yGraphDiff -= pixelsPerTile - Math.ceil(pixelsPerTile / 2);
-            xGraphDiff += pixelsPerTile - Math.ceil(pixelsPerTile / 2);
-
-            yGraphDiff = worldMapRect.height - yGraphDiff;
-            yGraphDiff += (int) worldMapRect.getY();
-            xGraphDiff += (int) worldMapRect.getX();
-
-            return new Point(xGraphDiff, yGraphDiff);
-        }
-        return null;
-    }
-
     @Override
     protected void loop() {
-        if (PUtils.getClient().getGameState() != GameState.LOGGED_IN) return;
+        if (client.getGameState() != GameState.LOGGED_IN) return;
         PlayerDetails details = PlayerDetails.generate();
 
         Point3D start = new Point3D(PPlayer.location());
         Point3D destination = new Point3D(targetLocation);
-
-        log.info("Start: " + start + ", Destination: " + destination);
-
-        // Im doing it manually to get the path to my local variables, you can just call DaxWalker.walkTo methods too
         DaxWalker.getInstance().allowTeleports = allowTeleports;
-        List<PathRequestPair> pathRequestPairs = DaxWalker.getInstance().allowTeleports ? DaxWalker.getInstance().getPathTeleports(targetLocation) : new ArrayList<>();
-        pathRequestPairs.add(0, new PathRequestPair(start, destination));
 
-        boolean hasFarmedSpiritTree = false;
-        for (SpiritTree.Location location : SpiritTree.Location.values()) {
-            if (location.isFarming() && SpiritTreeManager.getActiveSpiritTrees(client).getOrDefault(location, false)) {
-                hasFarmedSpiritTree = true;
-                break;
+        List<PathResult> pathResults;
+        boolean farmCapeToSpiritTree = false;
+
+        boolean goingNearestBank = targetLocation.equals(new RSTile(0, 0, 0));
+
+        if (goingNearestBank) {
+            log.info("Start: " + start + ", Destination: Nearest Bank");
+            List<BankPathRequestPair> pathRequestPairs = DaxWalker.getInstance().allowTeleports ? DaxWalker.getInstance().getBankPathTeleports() : new ArrayList<>();
+            pathRequestPairs.add(0, new BankPathRequestPair(start, null));
+            log.info("Total Request Count: " + pathRequestPairs.size());
+            pathResults = WebWalkerServerApi.getInstance().getBankPaths(new BulkBankPathRequest(PlayerDetails.generate(), pathRequestPairs));
+        } else {
+            log.info("Start: " + start + ", Destination: " + destination);
+            List<PathRequestPair> pathRequestPairs = DaxWalker.getInstance().allowTeleports ? DaxWalker.getInstance().getPathTeleports(targetLocation) : new ArrayList<>();
+            log.info("Teleport count: " + pathRequestPairs.size());
+            pathRequestPairs.add(0, new PathRequestPair(start, destination));
+
+            farmCapeToSpiritTree = SpiritTreeManager.getActiveSpiritTrees(client).getOrDefault(SpiritTree.Location.SPIRIT_TREE_GUILD, false)
+                    && Teleport.FARMING_CAPE.getTeleportLimit().canCast() && Teleport.FARMING_CAPE.getRequirement().satisfies();
+            if (farmCapeToSpiritTree) {
+                pathRequestPairs.add(new PathRequestPair(new Point3D(Teleport.FARMING_CAPE.getLocation()), SpiritTree.Location.SPIRIT_TREE_GUILD.getPoint3D()));
             }
-        }
 
-        if (gnomeVillageComplete && hasFarmedSpiritTree && client.getWorldType().contains(WorldType.MEMBERS)) {
+            boolean hasFarmedSpiritTree = false;
             for (SpiritTree.Location location : SpiritTree.Location.values()) {
-                //log.info(location.getName());
-                if (SpiritTreeManager.getActiveSpiritTrees(client).getOrDefault(location, false)) {
-                    //log.info("True");
-                    pathRequestPairs.add(new PathRequestPair(location.getPoint3D(), destination));
-                    pathRequestPairs.add(new PathRequestPair(new Point3D(PPlayer.location()), location.getPoint3D()));
+                if (location.isFarming() && SpiritTreeManager.getActiveSpiritTrees(client).getOrDefault(location, false)) {
+                    hasFarmedSpiritTree = true;
+                    break;
                 }
             }
-        }
 
-        List<PathResult> pathResults = WebWalkerServerApi.getInstance().getPaths(new BulkPathRequest(details, pathRequestPairs));
+            if (gnomeVillageComplete && hasFarmedSpiritTree && client.getWorldType().contains(WorldType.MEMBERS)) {
+                for (SpiritTree.Location location : SpiritTree.Location.values()) {
+                    if (SpiritTreeManager.getActiveSpiritTrees(client).getOrDefault(location, false)) {
+                        pathRequestPairs.add(new PathRequestPair(location.getPoint3D(), destination));
+                        pathRequestPairs.add(new PathRequestPair(new Point3D(PPlayer.location()), location.getPoint3D()));
+                    }
+                }
+            }
+            log.info("Total Request Count: " + pathRequestPairs.size());
+            pathResults = WebWalkerServerApi.getInstance().getPaths(new BulkPathRequest(details, pathRequestPairs));
+        }
 
         //log.info("Total Paths: " + pathResults.size());
-        if (pathResults.get(0) != null && pathResults.get(0).getPath() != null) {
-            destination = pathResults.get(0).getLastPoint();
-        }
 
         List<PathResult> validPaths = DaxWalker.getInstance().validPaths(pathResults);
 
-        //log.info("Valid Paths: " + validPaths.size());
+        if (validPaths.get(0) != null && validPaths.get(0).getPath() != null) {
+            destination = validPaths.get(0).getLastPoint();
+        }
 
+//        log.info("Valid Paths: " + validPaths.size());
 //        for (PathResult path : validPaths) {
 //            log.info(path.toString());
 //        }
@@ -245,53 +263,86 @@ public class WebWalker extends PScript {
         List<PathResult> secondPath = new ArrayList<>();
 
         for (PathResult path : validPaths) {
-            boolean addedPath = false;
-            for (SpiritTree.Location location : SpiritTree.Location.values()) {
-                if (SpiritTreeManager.getActiveSpiritTrees(client).getOrDefault(location, false)) {
-                    if (path.getFirstPoint().equals(start) && path.getLastPoint().equals(location.getPoint3D())) {
-                        firstPath.add(path);
-                        addedPath = true;
-                        break;
-                    }
-                    if (path.getFirstPoint().equals(location.getPoint3D()) && path.getLastPoint().equals(destination)) {
-                        secondPath.add(path);
-                        addedPath = true;
-                        break;
-                    }
+            if (farmCapeToSpiritTree) {
+                if (path.getFirstPoint().equals(new Point3D(Teleport.FARMING_CAPE.getLocation())) && path.getLastPoint().equals(SpiritTree.Location.SPIRIT_TREE_GUILD.getPoint3D())) {
+                    firstPath.add(path);
+                    continue;
                 }
             }
-            if (!addedPath) {
-                //log.info("Adding path1: " + path);
-                curatedPaths.add(path);
+
+            SpiritTree.Location entrySpirit = SpiritTree.Location.getSpiritTree(path.getLastPoint());
+            if (path.getFirstPoint().equals(start) && entrySpirit != null && SpiritTreeManager.getActiveSpiritTrees(client).getOrDefault(entrySpirit, false)) {
+                firstPath.add(path);
+                continue;
             }
+
+            SpiritTree.Location exitSpirit = SpiritTree.Location.getSpiritTree(path.getFirstPoint());
+            if (path.getLastPoint().equals(destination) && exitSpirit != null && SpiritTreeManager.getActiveSpiritTrees(client).getOrDefault(exitSpirit, false)) {
+                secondPath.add(path);
+                continue;
+            }
+
+            curatedPaths.add(path);
         }
 
         for (PathResult first : firstPath) {
             for (PathResult second : secondPath) {
                 PathResult combinedPath = first.addPath(second);
-                //log.info("Adding path2: " + combinedPath);
                 curatedPaths.add(combinedPath);
             }
         }
 
-        //log.info("Curated Paths: " + curatedPaths.size());
+        if (curatedPaths.size() == 0) {
+            log.warn("No valid path found");
+            PUtils.sendGameMessage("No valid path found.");
+            requestStop();
+            return;
+        }
 
-        PathResult pathResult = DaxWalker.getInstance().getBestPath(curatedPaths);
+//        if (curatedPaths.get(0) != null) {
+//            log.info("Walk Path0: " + curatedPaths.get(0).getCost() + ", " + curatedPaths.get(0));
+//        }
+//        for (PathResult pathResult : curatedPaths) {
+//            if (start.equals(pathResult.getPath().get(0))) {
+//                log.info("Walk Path: " + curatedPaths.get(0).getCost() + ", " + pathResult);
+//                continue;
+//            }
+//            Teleport teleport = DaxWalker.getMap().get(new RSTile(pathResult.getPath().get(0)));
+//            if (teleport == null) {
+//                log.info("Unknown Teleport Path: " + pathResult.getCost() + ", " + pathResult);
+//                continue;
+//            }
+//            log.info(teleport.name() + " Path: " + (teleport.getMoveCost() + pathResult.getCost()) + ", " + pathResult);
+//        }
+//        log.info("Curated Paths: " + curatedPaths.size());
+
+        PathResult pathResult = DaxWalker.getInstance().getBestPath(start, curatedPaths);
 
         if (pathResult == null) {
             log.warn("No valid path found");
             PUtils.sendGameMessage("No valid path found. Path status list: ");
-            Set<PathStatus> statuses = new HashSet<PathStatus>();
+            Set<PathStatus> statuses = new HashSet<>();
             for (PathResult r : pathResults) {
                 statuses.add(r.getPathStatus());
             }
             for (PathStatus r : statuses) {
                 PUtils.sendGameMessage(r.toString());
             }
+            if (statuses.contains(PathStatus.RATE_LIMIT_EXCEEDED)) {
+                PUtils.sendGameMessage("Consider buying your own Web Walking API key at https://admin.dax.cloud/webwalker");
+            }
             requestStop();
             return;
         }
-        log.info("Path: " + pathResult);
+        log.info("Movecost: " + DaxWalker.getInstance().getPathMoveCost(start, pathResult) + ", Path: " + pathResult);
+
+        if (pathResult.getPath() != null) {
+            RunescapeBank destBank = RunescapeBank.getBank(new RSTile(pathResult.getLastPoint()));
+            if (destBank != null) {
+                PUtils.sendGameMessage("Going to Bank: " + destBank.name());
+                log.info("Going to Bank: " + destBank.name());
+            }
+        }
 
         ArrayList<RSTile> path = pathResult.toRSTilePath();
         if (WalkerEngine.getInstance().walkPath(path, walkingCondition)) {
@@ -305,7 +356,7 @@ public class WebWalker extends PScript {
 
     public WalkingCondition walkingCondition = () -> {
         if (isStopRequested()) return WalkingCondition.State.EXIT_OUT_WALKER_FAIL;
-        GameState gameState = PUtils.getClient().getGameState();
+        GameState gameState = client.getGameState();
         if (gameState != GameState.LOGGED_IN && gameState != GameState.LOADING) {
             return WalkingCondition.State.EXIT_OUT_WALKER_FAIL;
         }
@@ -330,6 +381,42 @@ public class WebWalker extends PScript {
 
     @Override
     protected void onStart() {
+        PluginWrapper wrappedPaistiPlugin = oprsExternalPluginManager.getExternalPluginManager().getPlugin("paistisuite-plugin");
+        PluginWrapper wrappedWebwalkerPlugin = oprsExternalPluginManager.getExternalPluginManager().getPlugin("webwalker-plugin");
+        if (wrappedPaistiPlugin == null) {
+            sendGameMessage("WebWalker - Missing PaistiSuite Plugin");
+            return;
+        }
+        if (!isPluginEnabled("paistisuite")) {
+            sendGameMessage("WebWalker - PaistiSuite Plugin needs to be Enabled");
+            return;
+        }
+        try {
+            HttpUrl pluginJson = HttpUrl.parse("https://raw.githubusercontent.com/rokaHakor/openosrs-plugins/master/plugins.json");
+            Request request = new Request.Builder().url(pluginJson).build();
+            Response response = RuneLiteAPI.CLIENT.newCall(request).execute();
+            if (response.isSuccessful()) {
+                InputStream in = response.body().byteStream();
+                JsonReader reader = RuneLiteAPI.GSON.newJsonReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+                final List<PluginInfo> plugins = gson.fromJson(reader, new TypeToken<List<PluginInfo>>() {
+                }.getType());
+                for (PluginInfo pluginInfo : plugins) {
+                    if (pluginInfo.id.equals("paistisuite-plugin")) {
+                        String paistiGithubVersion = pluginInfo.releases.get(0).version;
+                        if (!wrappedPaistiPlugin.getDescriptor().getVersion().equals(paistiGithubVersion)) {
+                            sendGameMessage("WebWalker - PaistiSuite version out of date, should be " + paistiGithubVersion);
+                        }
+                    } else if (pluginInfo.id.equals("webwalker-plugin")) {
+                        String webwalkerGithubVersion = pluginInfo.releases.get(0).version;
+                        if (!wrappedWebwalkerPlugin.getDescriptor().getVersion().equals(webwalkerGithubVersion)) {
+                            sendGameMessage("WebWalker - WebWalker version out of date, should be " + webwalkerGithubVersion);
+                        }
+                    }
+                }
+            }
+        } catch (IOException | NullPointerException e) {
+            log.error("Version check error: ", e);
+        }
         gnomeVillageComplete = false;
         clientThread.invoke(() -> {
             // Checking if Tree Gnome Village is complete
@@ -341,6 +428,24 @@ public class WebWalker extends PScript {
         PUtils.sendGameMessage("WebWalker started!");
         DaxWalker.setCredentials(PaistiSuite.getDaxCredentialsProvider());
         configManager.setConfiguration(WebWalker.CONFIG_GROUP, WebWalkerConfig.WALKING, true);
+    }
+
+    public boolean isPluginEnabled(String pluginName) {
+        final String value = configManager.getConfiguration(RuneLiteConfig.GROUP_NAME, pluginName.toLowerCase());
+        return Boolean.parseBoolean(value);
+    }
+
+    public void sendGameMessage(String message) {
+        log.info(message);
+        String chatMessage = new ChatMessageBuilder()
+                .append(ChatColorType.HIGHLIGHT)
+                .append(message)
+                .build();
+
+        chatMessageManager.queue(QueuedMessage.builder()
+                .type(ChatMessageType.CONSOLE)
+                .runeLiteFormattedMessage(chatMessage)
+                .build());
     }
 
     @Override
@@ -359,6 +464,21 @@ public class WebWalker extends PScript {
                 configManager.setConfiguration("WebWalker", "catFarming", Farming.NONE);
             }
         }
+        if (event.getKey().equals("teleportSpellCost")) {
+            Teleport.TeleportType.TELEPORT_SPELL.setMoveCost(config.teleportSpellCost());
+        }
+        if (event.getKey().equals("teleportScrollCost")) {
+            Teleport.TeleportType.TELEPORT_SCROLL.setMoveCost(config.teleportScrollCost());
+        }
+        if (event.getKey().equals("nonrechargableTeleCost")) {
+            Teleport.TeleportType.NONRECHARABLE_TELE.setMoveCost(config.nonrechargableTeleCost());
+        }
+        if (event.getKey().equals("rechargableTeleCost")) {
+            Teleport.TeleportType.RECHARGABLE_TELE.setMoveCost(config.rechargableTeleCost());
+        }
+        if (event.getKey().equals("unlimitedTeleportCost")) {
+            Teleport.TeleportType.UNLIMITED_TELE.setMoveCost(config.unlimitedTeleportCost());
+        }
     }
 
     @Subscribe
@@ -374,10 +494,9 @@ public class WebWalker extends PScript {
             return;
         }
 
-
         if (configButtonClicked.getKey().equals("startButton")) {
-            Player player = PUtils.getClient().getLocalPlayer();
-            if (player != null && PUtils.getClient().getGameState() == GameState.LOGGED_IN) {
+            Player player = client.getLocalPlayer();
+            if (player != null && client.getGameState() == GameState.LOGGED_IN) {
                 try {
                     super.start();
                 } catch (Exception e) {
@@ -423,6 +542,8 @@ public class WebWalker extends PScript {
                 return new RSTile(config.catSlayer().getWorldPoint());
             case MISC:
                 return new RSTile(config.catMisc().getWorldPoint());
+            case NONE:
+                return new RSTile(0, 0, 0);
         }
 
         return null;
