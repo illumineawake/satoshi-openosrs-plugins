@@ -4,6 +4,7 @@ package net.runelite.client.plugins.paistisuite.api.WebWalker.Teleports;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ItemID;
+import net.runelite.api.MenuAction;
 import net.runelite.api.util.Text;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.plugins.paistisuite.api.*;
@@ -33,7 +34,7 @@ public enum Teleport {
     VARROCK_TELEPORT(
             TeleportType.TELEPORT_SPELL, new RSTile(3212, 3424, 0),
             Spell.VARROCK_TELEPORT::canUse,
-            () -> castSpell("Varrock Teleport", "Cast")
+            () -> castSpellAlt("Varrock Teleport", 1)
     ),
 
     VARROCK_TELEPORT_TAB(
@@ -860,6 +861,21 @@ public enum Teleport {
         WidgetInfo spellWidgetInfo = Spells.getWidget(spellName);
         if (PWidgets.isValid(spellWidgetInfo)) {
             return PInteraction.widget(PWidgets.get(spellWidgetInfo), action);
+        }
+        return false;
+    }
+
+    public static boolean castSpellAlt(String spellName, final int index) {
+        final WidgetInfo spellWidgetInfo = Spells.getWidget(spellName);
+        if (spellWidgetInfo != null && PWidgets.isValid(spellWidgetInfo)) {
+            final MenuAction finalActionOp = index > 5 ? MenuAction.CC_OP_LOW_PRIORITY : MenuAction.CC_OP;
+            PUtils.clientOnly(() -> {
+                PUtils.getClient().invokeMenuAction("", "PaistiSuite", index, finalActionOp.getId(), -1, spellWidgetInfo.getId());
+                PUtils.getClient().setMouseIdleTicks(0);
+                PUtils.getClient().setKeyboardIdleTicks(0);
+                return true;
+            }, "Spell Teleport");
+            return true;
         }
         return false;
     }

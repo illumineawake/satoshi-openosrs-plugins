@@ -249,7 +249,7 @@ public class WebWalker extends PScript {
 
         List<PathResult> validPaths = DaxWalker.getInstance().validPaths(pathResults);
 
-        if (validPaths.get(0) != null && validPaths.get(0).getPath() != null) {
+        if (validPaths != null && validPaths.get(0) != null && validPaths.get(0).getPath() != null) {
             destination = validPaths.get(0).getLastPoint();
         }
 

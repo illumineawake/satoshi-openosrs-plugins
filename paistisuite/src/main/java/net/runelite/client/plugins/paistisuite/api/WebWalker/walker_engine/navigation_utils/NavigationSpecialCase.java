@@ -1026,7 +1026,7 @@ public class NavigationSpecialCase {
     public static boolean handleShip(String... targetLocation) {
         if (NPCInteraction.clickNpc(Filters.NPCs.actionsContains(targetLocation), targetLocation)
                 && WaitFor.condition(10000, () -> ShipUtils.isOnShip() ? WaitFor.Return.SUCCESS : WaitFor.Return.IGNORE) == WaitFor.Return.SUCCESS) {
-            WaitFor.milliseconds(1800, 2800);
+            WaitFor.milliseconds(1200, 2200);
             return true;
         }
         return false;

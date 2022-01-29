@@ -48,7 +48,21 @@ public class SpiritTreeManager {
     public void checkTrees(int groupId) {
         if (groupId == 187) {
             log.info("Checking");
-            clientThread.invokeLater(() -> {
+            clientThread.invokeLater(() -> {//Spirit Tree Locations
+                Widget widgetTitle = client.getWidget(187, 0);
+                if (widgetTitle == null) {
+                    log.info("Widget Title Null");
+                    return;
+                }
+                Widget[] widgetTitleChildren = widgetTitle.getChildren();
+                if (widgetTitleChildren == null || widgetTitleChildren.length < 2) {
+                    log.info("Widget Title Children Null");
+                    return;
+                }
+                if (!widgetTitleChildren[1].getText().equals("Spirit Tree Locations")) {
+                    log.info("Not Spirit Tree Widget");
+                    return;
+                }
                 Widget options = client.getWidget(187, 3);
                 if (options == null) {
                     log.info("Options Null");

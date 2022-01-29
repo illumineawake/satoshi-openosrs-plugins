@@ -10,7 +10,7 @@ public enum Banks
 	AL_KHARID("Al kharid", 3269, 3167, 0),
 	ARCEUUS("Arceuus", 1624, 3745, 0),
 	ARDOUGNE_NORTH("Ardougne north", 2616, 3332, 0),
-	ARGOUDNE_SOUTH("Ardougne south", 2655, 3283, 0),
+	ARDOUDNE_SOUTH("Ardougne south", 2655, 3283, 0),
 	BARBARIAN_OUTPOST("Barbarian outpost", 2536, 3574, 0),
 	BLAST_FURNACE_BANK("Blast furnace", 1948, 4957, 0),
 	BLAST_MINE("Blast mine", 1502, 3856, 0),
