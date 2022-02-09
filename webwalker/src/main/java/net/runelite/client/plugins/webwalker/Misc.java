@@ -11,7 +11,7 @@ import net.runelite.api.coords.WorldPoint;
 @Getter
 public enum Misc
 {
-	NONE(""),
+	NONE("", new WorldPoint(2527, 3850, 0)),
 	GOBLIN_VILLAGE("Goblin Village", new WorldPoint(2956, 3505, 0)),
 	PATERDOMUS_TEMPLE("Paterdomus Temple", new WorldPoint(3405, 3489, 0)),
 	RIMMINGTON_MINE("Rimmington Mine", new WorldPoint(2977, 3240, 0)),

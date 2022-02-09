@@ -249,7 +249,7 @@ public class WebWalker extends PScript {
 
         List<PathResult> validPaths = DaxWalker.getInstance().validPaths(pathResults);
 
-        if (validPaths != null && validPaths.get(0) != null && validPaths.get(0).getPath() != null) {
+        if (validPaths != null && !validPaths.isEmpty() && validPaths.get(0).getPath() != null) {
             destination = validPaths.get(0).getLastPoint();
         }
 
@@ -565,6 +565,8 @@ public class WebWalker extends PScript {
                     return new RSTile(config.catFarmHops().getWorldPoint());
                 case TREES:
                     return new RSTile(config.catFarmTrees().getWorldPoint());
+                case NONE:
+                    return new RSTile(3316, 3205, 0);
             }
         }
         return null;
