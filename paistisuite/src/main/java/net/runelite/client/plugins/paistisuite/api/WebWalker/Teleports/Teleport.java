@@ -547,7 +547,13 @@ public enum Teleport {
     ROYAL_SEED(
             TeleportType.UNLIMITED_TELE, new RSTile(2465, 3495, 0),
             () -> CachedBooleans.IN_MEMBERS_WORLD.getCachedBoolean().getBoolean() && HasItems.ROYAL_SEED.getHasItem().checkHasItem(),
-            () -> RSItemHelper.click(Filters.Items.idEquals(ItemID.ROYAL_SEED_POD), "Commune")
+            () -> {
+                if (RSItemHelper.click(Filters.Items.idEquals(ItemID.ROYAL_SEED_POD), "Commune")) {
+                    PUtils.sleep(1200);
+                    return true;
+                }
+                return false;
+            }
     );//TODO add missing teleports
 
     public enum TeleportType {
