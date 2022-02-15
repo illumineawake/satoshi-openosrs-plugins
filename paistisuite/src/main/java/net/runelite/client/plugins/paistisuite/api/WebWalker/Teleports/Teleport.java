@@ -549,7 +549,7 @@ public enum Teleport {
             () -> CachedBooleans.IN_MEMBERS_WORLD.getCachedBoolean().getBoolean() && HasItems.ROYAL_SEED.getHasItem().checkHasItem(),
             () -> {
                 if (RSItemHelper.click(Filters.Items.idEquals(ItemID.ROYAL_SEED_POD), "Commune")) {
-                    PUtils.sleep(1200);
+                    PUtils.sleep(6000);
                     return true;
                 }
                 return false;
