@@ -3,6 +3,7 @@ package net.runelite.client.plugins.paistisuite;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.paistisuite.api.PUtils;
+import net.runelite.client.plugins.paistisuite.api.WebWalker.walker_engine.WalkerEngine;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 @Slf4j
@@ -37,7 +38,10 @@ public abstract class PScript extends Plugin {
 
     public void requestStop() {
         log.info("Requested stop.");
-        if (scriptRunner != null) scriptRunner.requestStop();
+        if (scriptRunner != null) {
+            WalkerEngine.getInstance().setExitWalker(true);
+            scriptRunner.requestStop();
+        }
         scriptRunner = null;
         isRunning = false;
     }

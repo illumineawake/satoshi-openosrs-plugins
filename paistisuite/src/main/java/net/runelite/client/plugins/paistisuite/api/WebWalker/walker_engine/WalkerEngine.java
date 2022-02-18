@@ -1,6 +1,6 @@
 package net.runelite.client.plugins.paistisuite.api.WebWalker.walker_engine;
 
-import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -31,11 +31,11 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
-public class WalkerEngine{
+public class WalkerEngine {
     private static WalkerEngine walkerEngine;
     private static Client client = PUtils.getClient();
     private int attemptsForAction;
-    private int clickAfterSteps = (int)PUtils.randomNormal(5, 10);
+    private int clickAfterSteps = (int) PUtils.randomNormal(5, 10);
     private final int failThreshold;
     private boolean navigating;
     private final ReentrantLock pathLock = new ReentrantLock();
@@ -43,55 +43,57 @@ public class WalkerEngine{
     private List<RSTile> currentPath;
     private PathAnalyzer.DestinationDetails debugFurthestReachable = null;
 
-    public static WalkerEngine getInstance(){
+    @Setter
+    private boolean exitWalker;
+
+    public static WalkerEngine getInstance() {
         return walkerEngine != null ? walkerEngine : (walkerEngine = new WalkerEngine());
     }
 
-    private WalkerEngine(){
+    private WalkerEngine() {
         attemptsForAction = 0;
         failThreshold = 3;
-        synchronized (pathLock){
+        synchronized (pathLock) {
             navigating = false;
             currentPath = null;
         }
     }
 
-    public boolean walkPath(List<RSTile> path){
+    public boolean walkPath(List<RSTile> path) {
         return walkPath(path, null);
     }
 
     public List<RSTile> getCurrentPath() {
-        synchronized (pathLock){
+        synchronized (pathLock) {
             return currentPath;
         }
     }
 
-    public void setDebugFurthestReachable(PathAnalyzer.DestinationDetails val){
-        synchronized (furthestReachableTileLock){
+    public void setDebugFurthestReachable(PathAnalyzer.DestinationDetails val) {
+        synchronized (furthestReachableTileLock) {
             debugFurthestReachable = val;
         }
     }
 
     public List<WorldPoint> getCurrentPathWorldPoints() {
-        synchronized (pathLock){
+        synchronized (pathLock) {
             if (currentPath == null) return null;
             return currentPath.stream().map(RSTile::toWorldPoint).collect(Collectors.toList());
         }
     }
 
-    public PathAnalyzer.DestinationDetails getDebugFurthestTile(){
-        synchronized (furthestReachableTileLock){
+    public PathAnalyzer.DestinationDetails getDebugFurthestTile() {
+        synchronized (furthestReachableTileLock) {
             return this.debugFurthestReachable;
         }
     }
 
     /**
-     *
      * @param path
      * @param walkingCondition
      * @return
      */
-    public boolean walkPath(List<RSTile> path, WalkingCondition walkingCondition){
+    public boolean walkPath(List<RSTile> path, WalkingCondition walkingCondition) {
         if (path.size() == 0) {
             log.info("Path is empty");
             return false;
@@ -104,7 +106,7 @@ public class WalkerEngine{
             }
         }
 
-        synchronized (pathLock){
+        synchronized (pathLock) {
             navigating = true;
             currentPath = path;
         }
@@ -113,6 +115,10 @@ public class WalkerEngine{
             resetAttempts();
 
             while (true) {
+
+                if (exitWalker) {
+                    return false;
+                }
 
                 GameState gameState = client.getGameState();
                 if (gameState != GameState.LOGGED_IN && gameState != GameState.LOADING) {
@@ -136,7 +142,7 @@ public class WalkerEngine{
                 }
 
                 destinationDetails = PathAnalyzer.furthestReachableTile(path);
-                synchronized (furthestReachableTileLock){
+                synchronized (furthestReachableTileLock) {
                     debugFurthestReachable = destinationDetails;
                 }
                 if (destinationDetails == null) {
@@ -171,7 +177,7 @@ public class WalkerEngine{
 
                 switch (destinationDetails.getState()) {
                     case DISCONNECTED_PATH:
-                        if (currentNode.getRSTile().toWorldPoint().distanceToHypotenuse(PPlayer.location()) > 10){
+                        if (currentNode.getRSTile().toWorldPoint().distanceToHypotenuse(PPlayer.location()) > 10) {
                             clickMinimap(currentNode);
                             WaitFor.milliseconds(1200, 3400);
                         }
@@ -240,7 +246,7 @@ public class WalkerEngine{
                                 }
 
                                 PathAnalyzer.DestinationDetails furthestReachable = PathAnalyzer.furthestReachableTile(path);
-                                synchronized (furthestReachableTileLock){
+                                synchronized (furthestReachableTileLock) {
                                     debugFurthestReachable = furthestReachable;
                                 }
                                 PathFindingNode currentDestination = BFS.bfsClosestToPath(path, RealTimeCollisionTile.get(destination.getX(), destination.getY(), destination.getZ()));
@@ -264,10 +270,10 @@ public class WalkerEngine{
                                 }
                                 int indexNextDestination = path.indexOf(furthestReachable.getDestination().getRSTile());
                                 if (indexNextDestination - indexCurrentDestination > clickAfterSteps || indexCurrentDestination - indexCurrentPosition < 5) {
-                                    clickAfterSteps = (int)PUtils.randomNormal(5, 10);
+                                    clickAfterSteps = (int) PUtils.randomNormal(5, 10);
                                     return WaitFor.Return.SUCCESS;
                                 }
-                                if (System.currentTimeMillis() > offsetWalkingTimeout && !PPlayer.isMoving()){
+                                if (System.currentTimeMillis() > offsetWalkingTimeout && !PPlayer.isMoving()) {
                                     return WaitFor.Return.FAIL;
                                 }
                                 return WaitFor.milliseconds(100);
@@ -292,32 +298,32 @@ public class WalkerEngine{
 
             }
         } finally {
-            synchronized(pathLock){
+            synchronized (pathLock) {
                 navigating = false;
             }
         }
     }
 
     public boolean isNavigating() {
-        synchronized ( pathLock ){
+        synchronized (pathLock) {
             return navigating;
         }
     }
 
-    boolean isDestinationClose(PathFindingNode pathFindingNode){
+    boolean isDestinationClose(PathFindingNode pathFindingNode) {
         final RSTile playerPosition = new RSTile(PPlayer.location());
         return playerPosition.distanceToDouble(new RSTile(pathFindingNode.getX(), pathFindingNode.getY(), pathFindingNode.getZ())) <= 12
                 && (BFS.isReachable(RealTimeCollisionTile.get(playerPosition.getX(), playerPosition.getY(), playerPosition.getPlane()), RealTimeCollisionTile.get(pathFindingNode.getX(), pathFindingNode.getY(), pathFindingNode.getZ()), 200));
     }
 
-    public boolean clickMinimap(PathFindingNode pathFindingNode){
+    public boolean clickMinimap(PathFindingNode pathFindingNode) {
         final RSTile playerPosition = new RSTile(PPlayer.location());
-        if (playerPosition.distanceToDouble(pathFindingNode.getRSTile()) <= 1){
+        if (playerPosition.distanceToDouble(pathFindingNode.getRSTile()) <= 1) {
             return true;
         }
         PathFindingNode randomNearby = BFS.getRandomTileNearby(pathFindingNode);
 
-        if (randomNearby == null){
+        if (randomNearby == null) {
             log.info("Unable to generate randomization.");
             return false;
         }
@@ -326,37 +332,41 @@ public class WalkerEngine{
         return AccurateMouse.walkTo(new RSTile(randomNearby.getX(), randomNearby.getY(), randomNearby.getZ())) || AccurateMouse.walkTo(new RSTile(pathFindingNode.getX(), pathFindingNode.getY(), pathFindingNode.getZ()));
     }
 
-    private boolean resetAttempts(){
+    private boolean resetAttempts() {
+        exitWalker = false;
         return successfulAttempt();
     }
 
-    private boolean successfulAttempt(){
+    private boolean successfulAttempt() {
         attemptsForAction = 0;
         return true;
     }
 
-    private void failedAttempt(){
+    private void failedAttempt() {
         log.info("Failed attempt on action.");
         attemptsForAction++;
         WaitFor.milliseconds(450 * (attemptsForAction + 1), 850 * (attemptsForAction + 1));
         CollisionDataCollector.generateRealTimeCollision();
     }
 
-    private boolean isFailedOverThreshhold(){
+    private boolean isFailedOverThreshhold() {
         return attemptsForAction >= failThreshold;
     }
 
     private class CustomConditionContainer {
         private WalkingCondition walkingCondition;
         private WalkingCondition.State result;
-        CustomConditionContainer(WalkingCondition walkingCondition){
+
+        CustomConditionContainer(WalkingCondition walkingCondition) {
             this.walkingCondition = walkingCondition;
             this.result = WalkingCondition.State.CONTINUE_WALKER;
         }
-        public WalkingCondition.State trigger(){
+
+        public WalkingCondition.State trigger() {
             result = (walkingCondition != null ? walkingCondition.action() : result);
             return result != null ? result : WalkingCondition.State.CONTINUE_WALKER;
         }
+
         public WalkingCondition.State getResult() {
             return result;
         }
@@ -365,14 +375,14 @@ public class WalkerEngine{
     private boolean handleTeleports(List<RSTile> path) {
         RSTile startPosition = path.get(0);
         RSTile playerPosition = new RSTile(PPlayer.location());
-        if(startPosition.equals(playerPosition)) return true;
-        if (PBanking.isBankOpen()){
+        if (startPosition.equals(playerPosition)) return true;
+        if (PBanking.isBankOpen()) {
             PBanking.closeBank();
             return WaitFor.condition(2000, () -> !PBanking.isBankOpen() ? WaitFor.Return.SUCCESS : WaitFor.Return.IGNORE) == WaitFor.Return.SUCCESS;
         }
         for (Teleport teleport : Teleport.values()) {
             if (!teleport.getRequirement().satisfies()) continue;
-            if(teleport.isAtTeleportSpot(startPosition) && !teleport.isAtTeleportSpot(playerPosition)){
+            if (teleport.isAtTeleportSpot(startPosition) && !teleport.isAtTeleportSpot(playerPosition)) {
                 log.info("Using teleport method: " + teleport);
                 teleport.trigger();
                 return WaitFor.condition(PUtils.random(3000, 20000),

@@ -1,7 +1,9 @@
 package net.runelite.client.plugins.paistisuite.api.WebWalker.walker_engine.interaction_handling;
 
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.*;
+import net.runelite.api.Client;
+import net.runelite.api.NPC;
+import net.runelite.api.ObjectComposition;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.queries.NPCQuery;
 import net.runelite.client.plugins.paistisuite.api.*;
@@ -27,18 +29,18 @@ public class PathObjectHandler {
     private static PathObjectHandler instance;
     private final String[] sortedOptionsArr, sortedBlackListOptionsArr, sortedBlackListArr, sortedHighPriorityOptionsArr;
 
-    private PathObjectHandler(){
+    private PathObjectHandler() {
         sortedOptionsArr = new String[]{"Enter", "Cross", "Pass", "Open", "Close", "Walk-through", "Use", "Pass-through", "Exit",
                 "Walk-Across", "Go-through", "Walk-across", "Climb", "Climb-up", "Climb-down", "Climb-over", "Climb over", "Climb-into", "Climb-through",
-                "Board", "Jump-from", "Jump-across", "Jump-to", "Squeeze-through", "Jump-over", "Pay-toll(10gp)", "Step-over", "Walk-down", "Walk-up","Walk-Up", "Travel", "Get in",
-                "Investigate", "Operate", "Climb-under","Jump","Crawl-down","Crawl-through","Activate","Push","Squeeze-past","Walk-Down",
-                "Swing-on", "Climb up", "Ascend", "Descend","Channel","Teleport","Pass-Through","Jump-up","Jump-down","Swing across", "Climb Up", "Climb Down"};
+                "Board", "Jump-from", "Jump-across", "Jump-to", "Squeeze-through", "Jump-over", "Pay-toll(10gp)", "Step-over", "Walk-down", "Walk-up", "Walk-Up", "Travel", "Get in",
+                "Investigate", "Operate", "Climb-under", "Jump", "Crawl-down", "Crawl-through", "Activate", "Push", "Squeeze-past", "Walk-Down",
+                "Swing-on", "Climb up", "Ascend", "Descend", "Channel", "Teleport", "Pass-Through", "Jump-up", "Jump-down", "Swing across", "Climb Up", "Climb Down"};
         sortedBlackListOptionsArr = new String[]{"Chop down"};
         sortedBlackListArr = new String[]{"Coffin", "Drawers"};
         sortedHighPriorityOptionsArr = new String[]{"Pay-toll(10gp)", "Squeeze-past"};
     }
 
-    private static PathObjectHandler getInstance(){
+    private static PathObjectHandler getInstance() {
         return instance != null ? instance : (instance = new PathObjectHandler());
     }
 
@@ -123,17 +125,17 @@ public class PathObjectHandler {
                         .filter(pair -> pair.getSecond().getName().equalsIgnoreCase("Vines"))
                         .anyMatch(
                                 pair -> Arrays.stream(pair.getSecond().getActions())
-                                .filter(Objects::nonNull)
-                                .anyMatch(a -> a.equalsIgnoreCase("Chop-down")));
+                                        .filter(Objects::nonNull)
+                                        .anyMatch(a -> a.equalsIgnoreCase("Chop-down")));
             }
         }),
-        AVA_BOOKCASE ("Bookcase", "Search", new WorldPoint(3097, 3359, 0), new SpecialCondition() {
+        AVA_BOOKCASE("Bookcase", "Search", new WorldPoint(3097, 3359, 0), new SpecialCondition() {
             @Override
             boolean isSpecialLocation(PathAnalyzer.DestinationDetails destinationDetails) {
                 return destinationDetails.getDestination().getX() >= 3097 && destinationDetails.getAssumed().toWorldPoint().equals(new WorldPoint(3097, 3359, 0));
             }
         }),
-        AVA_LEVER ("Lever", "Pull", new WorldPoint(3096, 3357, 0), new SpecialCondition() {
+        AVA_LEVER("Lever", "Pull", new WorldPoint(3096, 3357, 0), new SpecialCondition() {
             @Override
             boolean isSpecialLocation(PathAnalyzer.DestinationDetails destinationDetails) {
                 return destinationDetails.getDestination().getX() < 3097 && destinationDetails.getAssumed().toWorldPoint().equals(new WorldPoint(3097, 3359, 0));
@@ -172,7 +174,7 @@ public class PathObjectHandler {
         VARROCK_UNDERWALL_TUNNEL("Underwall tunnel", "Climb-into", new WorldPoint(3141, 3513, 0), new SpecialCondition() {
             @Override
             boolean isSpecialLocation(PathAnalyzer.DestinationDetails destinationDetails) {
-                return destinationDetails.getAssumed().toWorldPoint().equals(new WorldPoint(3141, 3513, 0 ));
+                return destinationDetails.getAssumed().toWorldPoint().equals(new WorldPoint(3141, 3513, 0));
             }
         }),
         GAMES_ROOM_STAIRS("Stairs", "Climb-down", new WorldPoint(2899, 3565, 0), new SpecialCondition() {
@@ -182,7 +184,7 @@ public class PathObjectHandler {
                         destinationDetails.getAssumed().toWorldPoint().equals(new WorldPoint(2205, 4934, 1));
             }
         }),
-        CANIFIS_BASEMENT_WALL("Wall", "Search", new WorldPoint(3480, 9836, 0),new SpecialCondition() {
+        CANIFIS_BASEMENT_WALL("Wall", "Search", new WorldPoint(3480, 9836, 0), new SpecialCondition() {
             @Override
             boolean isSpecialLocation(PathAnalyzer.DestinationDetails destinationDetails) {
                 return destinationDetails.getDestination().getRSTile().toWorldPoint().equals(new WorldPoint(3480, 9836, 0)) ||
@@ -219,7 +221,7 @@ public class PathObjectHandler {
         private WorldPoint location;
         private SpecialCondition specialCondition;
 
-        SpecialObject(String name, String action, WorldPoint location, SpecialCondition specialCondition){
+        SpecialObject(String name, String action, WorldPoint location, SpecialCondition specialCondition) {
             this.name = name;
             this.action = action;
             this.location = location;
@@ -238,13 +240,13 @@ public class PathObjectHandler {
             return location;
         }
 
-        public boolean isSpecialCondition(PathAnalyzer.DestinationDetails destinationDetails){
+        public boolean isSpecialCondition(PathAnalyzer.DestinationDetails destinationDetails) {
             return specialCondition.isSpecialLocation(destinationDetails);
         }
 
-        public static SpecialObject getValidSpecialObjects(PathAnalyzer.DestinationDetails destinationDetails){
-            for (SpecialObject object : values()){
-                if (object.isSpecialCondition(destinationDetails)){
+        public static SpecialObject getValidSpecialObjects(PathAnalyzer.DestinationDetails destinationDetails) {
+            for (SpecialObject object : values()) {
+                if (object.isSpecialCondition(destinationDetails)) {
                     return object;
                 }
             }
@@ -257,7 +259,7 @@ public class PathObjectHandler {
         abstract boolean isSpecialLocation(PathAnalyzer.DestinationDetails destinationDetails);
     }
 
-    public static boolean handle(PathAnalyzer.DestinationDetails destinationDetails, List<RSTile> path){
+    public static boolean handle(PathAnalyzer.DestinationDetails destinationDetails, List<RSTile> path) {
         RealTimeCollisionTile start = destinationDetails.getDestination();
         RSTile end = destinationDetails.getAssumed();
 
@@ -273,11 +275,11 @@ public class PathObjectHandler {
         } else {
             action = specialObject.getAction();
             Predicate<PTileObject> specialObjectFilter = (PTileObject obj) -> {
-                    ObjectComposition def = obj.getSecond();
-                    if (def == null) return false;
-                    return def.getName().equalsIgnoreCase(specialObject.getName()) &&
-                            Arrays.asList(def.getActions()).contains(specialObject.getAction()) &&
-                            obj.getFirst().getWorldLocation().distanceTo2D(specialObject.getLocation() != null ? specialObject.getLocation() : destinationDetails.getAssumed().toWorldPoint()) <= 3;
+                ObjectComposition def = obj.getSecond();
+                if (def == null) return false;
+                return def.getName().equalsIgnoreCase(specialObject.getName()) &&
+                        Arrays.asList(def.getActions()).contains(specialObject.getAction()) &&
+                        obj.getFirst().getWorldLocation().distanceTo2D(specialObject.getLocation() != null ? specialObject.getLocation() : destinationDetails.getAssumed().toWorldPoint()) <= 3;
             };
             /*
             Filter<GameObject> specialObjectFilter = Filters.Objects.nameEquals(specialObject.getName())
@@ -288,14 +290,14 @@ public class PathObjectHandler {
             interactiveObjects = Objects.findNearest(15, specialObjectFilter);
              */
             interactiveObjects = PObjects.findAllObjects(
-                specialObjectFilter
-                .and(obj -> obj.getFirst().getWorldLocation().distanceTo2DHypotenuse(PPlayer.location()) <= 25));
+                    specialObjectFilter
+                            .and(obj -> obj.getFirst().getWorldLocation().distanceTo2DHypotenuse(PPlayer.location()) <= 25));
             interactiveObjects.sort(Comparator.comparingInt(obj -> obj.getWorldLocation().distanceTo(PPlayer.getWorldLocation())));
         }
 
         if (interactiveObjects.size() == 0) {
             log.info("No interactive objects found.");
-            return true;
+            return false;
         }
 
         StringBuilder stringBuilder = new StringBuilder("Sort Order: ");
@@ -306,11 +308,11 @@ public class PathObjectHandler {
         return handle(path, interactiveObjects.get(0), destinationDetails, action, specialObject);
     }
 
-    private static boolean handle(List<RSTile> path, PTileObject objDefPair, PathAnalyzer.DestinationDetails destinationDetails, String action, SpecialObject specialObject){
+    private static boolean handle(List<RSTile> path, PTileObject objDefPair, PathAnalyzer.DestinationDetails destinationDetails, String action, SpecialObject specialObject) {
         PathAnalyzer.DestinationDetails current = PathAnalyzer.furthestReachableTile(path);
         WalkerEngine.getInstance().setDebugFurthestReachable(current);
 
-        if (current == null){
+        if (current == null) {
             return false;
         }
 
@@ -334,7 +336,7 @@ public class PathObjectHandler {
         if (specialObject != null) {
             log.info("Detected Special Object: " + specialObject);
             Client client = PUtils.getClient();
-            switch (specialObject){
+            switch (specialObject) {
                 case FALADOR_COWS_WIDE_GATE:
                 case FALADOR_COWS_WIDE_GATE_CLOSE:
                     log.info("Handling gate");
@@ -346,12 +348,12 @@ public class PathObjectHandler {
                     if (PWalking.sceneWalk(destinationDetails.getDestination().getRSTile().toWorldPoint())) {
                         log.info("Walking in front of gate");
                         PUtils.sleepNormal(700, 1300);
-                        if (PUtils.waitCondition(PUtils.random(6000, 8000), () -> new RSTile(PPlayer.getWorldLocation()).equals(destinationDetails.getDestination().getRSTile()))){
+                        if (PUtils.waitCondition(PUtils.random(6000, 8000), () -> new RSTile(PPlayer.getWorldLocation()).equals(destinationDetails.getDestination().getRSTile()))) {
                             log.info("In front of gate, trying to open");
                             PUtils.sleepNormal(200, 400);
-                            if(InteractionHelper.click(gateclose, "Open")){
+                            if (InteractionHelper.click(gateclose, "Open")) {
                                 log.info("CLicked gate, waiting for reachable");
-                                if (PUtils.waitCondition(PUtils.random(1300, 1900), () -> new Reachable().canReach(destinationDetails.getAssumed()))){
+                                if (PUtils.waitCondition(PUtils.random(1300, 1900), () -> new Reachable().canReach(destinationDetails.getAssumed()))) {
                                     successfulClick = true;
                                     log.info("Destination behind gate is now reachable");
                                 } else {
@@ -373,14 +375,14 @@ public class PathObjectHandler {
                                     .anyMatch(a -> a.equalsIgnoreCase("Slash")))
                             .collect(Collectors.toList());
                     int iterations = 0;
-                    while (webs.size() > 0){
+                    while (webs.size() > 0) {
                         if (canLeftclickWeb()) {
                             InteractionHelper.click(webs.get(0), "Slash");
                         } else {
                             useBladeOnWeb(webs.get(0));
                         }
                         if (webs.get(0).getWorldLocation().distanceTo2D(PPlayer.location()) <= 1) {
-                            WaitFor.milliseconds((int)PUtils.randomNormal(50, 800, 250, 150));
+                            WaitFor.milliseconds((int) PUtils.randomNormal(50, 800, 250, 150));
                         } else {
                             WaitFor.milliseconds(2000, 4000);
                         }
@@ -391,11 +393,11 @@ public class PathObjectHandler {
                                         .filter(Objects::nonNull)
                                         .anyMatch(a -> a.equalsIgnoreCase("Slash")))
                                 .collect(Collectors.toList());
-                        if (Reachable.getMap().getParent(destinationDetails.getAssumedX(), destinationDetails.getAssumedY()) != null && (webs == null || webs.size() == 0) ){
+                        if (Reachable.getMap().getParent(destinationDetails.getAssumedX(), destinationDetails.getAssumedY()) != null && (webs == null || webs.size() == 0)) {
                             successfulClick = true;
                             break;
                         }
-                        if (iterations++ > 5){
+                        if (iterations++ > 5) {
                             break;
                         }
                     }
@@ -403,13 +405,13 @@ public class PathObjectHandler {
                 case ARDY_DOOR_LOCK_SIDE:
                 case YANILLE_DOOR_LOCK_SIDE:
                     for (int i = 0; i < PUtils.random(15, 25); i++) {
-                        if (!clickOnObject(objDefPair, destinationDetails, specialObject.getAction())){
+                        if (!clickOnObject(objDefPair, destinationDetails, specialObject.getAction())) {
                             continue;
                         }
-                        if (PPlayer.location().distanceTo2D(specialObject.getLocation()) > 1){
+                        if (PPlayer.location().distanceTo2D(specialObject.getLocation()) > 1) {
                             WaitFor.condition(PUtils.random(3000, 4000), () -> PPlayer.location().distanceTo2D(specialObject.getLocation()) <= 1 ? WaitFor.Return.SUCCESS : WaitFor.Return.IGNORE);
                         }
-                        if (PPlayer.location().equals(new WorldPoint(2564, 3356, 0))){
+                        if (PPlayer.location().equals(new WorldPoint(2564, 3356, 0))) {
                             successfulClick = true;
                             break;
                         }
@@ -417,7 +419,7 @@ public class PathObjectHandler {
                     break;
                 case VARROCK_UNDERWALL_TUNNEL:
                 case EDGEVILLE_UNDERWALL_TUNNEL:
-                    if(!clickOnObject(objDefPair, destinationDetails, specialObject.getAction())){
+                    if (!clickOnObject(objDefPair, destinationDetails, specialObject.getAction())) {
                         return false;
                     }
                     successfulClick = true;
@@ -429,14 +431,14 @@ public class PathObjectHandler {
                             .result(client)
                             .first();
                     if (boulder == null) return false;
-                    if(InteractionHelper.click(boulder, "Roll")){
-                        if(WaitFor.condition(12000,
+                    if (InteractionHelper.click(boulder, "Roll")) {
+                        if (WaitFor.condition(12000,
                                 () -> new NPCQuery()
                                         .nameEquals("Boulder")
                                         .filter(Filters.NPCs.actionsContains("Roll"))
                                         .result(client)
                                         .size() > 0 ?
-                                        WaitFor.Return.SUCCESS : WaitFor.Return.IGNORE) == WaitFor.Return.SUCCESS){
+                                        WaitFor.Return.SUCCESS : WaitFor.Return.IGNORE) == WaitFor.Return.SUCCESS) {
                             WaitFor.milliseconds(3500, 6000);
                         }
                     }
@@ -447,7 +449,7 @@ public class PathObjectHandler {
             }
         }
 
-        if (!successfulClick){
+        if (!successfulClick) {
             String[] validOptions = action != null ? new String[]{action} : getViableOption(
                     Arrays.stream(objDefPair.getSecond().getActions()).filter(Objects::nonNull).filter(Arrays.asList(getInstance().sortedOptionsArr)::contains).collect(
                             Collectors.toList()), destinationDetails);
@@ -458,7 +460,7 @@ public class PathObjectHandler {
 
         boolean strongholdDoor = isStrongholdDoor(objDefPair);
 
-        if (strongholdDoor){
+        if (strongholdDoor) {
             if (WaitFor.condition(PUtils.random(6700, 7800), () -> {
                 WorldPoint playerPosition = PPlayer.location();
                 if (BFS.isReachable(RealTimeCollisionTile.get(playerPosition.getX(), playerPosition.getY(), playerPosition.getPlane()), destinationDetails.getNextTile(), 50)) {
@@ -470,7 +472,7 @@ public class PathObjectHandler {
                     return WaitFor.Return.SUCCESS;
                 }
                 return WaitFor.Return.IGNORE;
-            }) != WaitFor.Return.SUCCESS){
+            }) != WaitFor.Return.SUCCESS) {
                 return false;
             }
         }
@@ -482,20 +484,20 @@ public class PathObjectHandler {
                 NPCInteraction.handleConversation(NPCInteraction.GENERAL_RESPONSES);
             }
             if (destinationDetails1 != null) {
-                if (!destinationDetails1.getDestination().equals(currentFurthest)){
+                if (!destinationDetails1.getDestination().equals(currentFurthest)) {
                     return WaitFor.Return.SUCCESS;
                 }
             }
             return WaitFor.Return.IGNORE;
         });
-        if (strongholdDoor){
+        if (strongholdDoor) {
             WaitFor.milliseconds(800, 1200);
         }
         return true;
     }
 
-    public static List<PTileObject> getInteractiveObjects(int x, int y, int z, PathAnalyzer.DestinationDetails destinationDetails){
-        List<PTileObject> objects = PObjects.findAllObjects(interactiveObjectFilter(x,y,z,destinationDetails));
+    public static List<PTileObject> getInteractiveObjects(int x, int y, int z, PathAnalyzer.DestinationDetails destinationDetails) {
+        List<PTileObject> objects = PObjects.findAllObjects(interactiveObjectFilter(x, y, z, destinationDetails));
         final WorldPoint base = new WorldPoint(x, y, z);
         objects.sort((o1, o2) -> {
             int c = Integer.compare(
@@ -506,29 +508,29 @@ public class PathObjectHandler {
             List<String> actions1 = Arrays.asList(o1.getSecond().getActions());
             List<String> actions2 = Arrays.asList(o2.getSecond().getActions());
 
-            if (assumedZ > destinationZ){
-                if (actions1.contains("Climb-up")){
+            if (assumedZ > destinationZ) {
+                if (actions1.contains("Climb-up")) {
                     return -1;
                 }
-                if (actions2.contains("Climb-up")){
+                if (actions2.contains("Climb-up")) {
                     return 1;
                 }
-            } else if (assumedZ < destinationZ){
-                if (actions1.contains("Climb-down")){
+            } else if (assumedZ < destinationZ) {
+                if (actions1.contains("Climb-down")) {
                     return -1;
                 }
-                if (actions2.contains("Climb-down")){
+                if (actions2.contains("Climb-down")) {
                     return 1;
                 }
-            } else if(destinationDetails.getAssumed().distanceTo(destinationDetails.getDestination().getRSTile()) >= 20){
-                if(actions1.contains("Climb-up") || actions1.contains("Climb-down")){
+            } else if (destinationDetails.getAssumed().distanceTo(destinationDetails.getDestination().getRSTile()) >= 20) {
+                if (actions1.contains("Climb-up") || actions1.contains("Climb-down")) {
                     return -1;
-                } else if(actions2.contains("Climb-up") || actions2.contains("Climb-down")){
+                } else if (actions2.contains("Climb-up") || actions2.contains("Climb-down")) {
                     return 1;
                 }
-            } else if(actions1.contains("Climb-up") || actions1.contains("Climb-down")){
+            } else if (actions1.contains("Climb-up") || actions1.contains("Climb-down")) {
                 return 1;
-            } else if(actions2.contains("Climb-up") || actions2.contains("Climb-down")){
+            } else if (actions2.contains("Climb-up") || actions2.contains("Climb-down")) {
                 return -1;
             }
             return c;
@@ -549,21 +551,21 @@ public class PathObjectHandler {
      * @param destinationDetails context where destination is at
      * @return
      */
-    private static Predicate<PTileObject> interactiveObjectFilter(int x, int y, int z, PathAnalyzer.DestinationDetails destinationDetails){
+    private static Predicate<PTileObject> interactiveObjectFilter(int x, int y, int z, PathAnalyzer.DestinationDetails destinationDetails) {
         return (PTileObject obj) -> {
             ObjectComposition def = obj.getDef();
-            if (def == null){
+            if (def == null) {
                 return false;
             }
 
-            if (Filters.Objects.actionsContains("Cross").test(obj)){
+            if (Filters.Objects.actionsContains("Cross").test(obj)) {
                 //log.info("Test");
             }
             if (Filters.Objects.nameEquals(getInstance().sortedBlackListArr).test(obj)) {
                 return false;
             }
 
-            if (Filters.Objects.actionsContains(getInstance().sortedBlackListOptionsArr).test(obj)){
+            if (Filters.Objects.actionsContains(getInstance().sortedBlackListOptionsArr).test(obj)) {
                 return false;
             }
 
@@ -579,23 +581,23 @@ public class PathObjectHandler {
         };
     }
 
-    private static String[] getViableOption(Collection<String> collection, PathAnalyzer.DestinationDetails destinationDetails){
+    private static String[] getViableOption(Collection<String> collection, PathAnalyzer.DestinationDetails destinationDetails) {
         Set<String> set = new HashSet<>(collection);
-        if (set.retainAll(Arrays.asList(getInstance().sortedHighPriorityOptionsArr)) && set.size() > 0){
+        if (set.retainAll(Arrays.asList(getInstance().sortedHighPriorityOptionsArr)) && set.size() > 0) {
             return set.toArray(new String[0]);
         }
-        if (destinationDetails.getAssumedZ() > destinationDetails.getDestination().getZ()){
-            if (collection.contains("Climb-up")){
+        if (destinationDetails.getAssumedZ() > destinationDetails.getDestination().getZ()) {
+            if (collection.contains("Climb-up")) {
                 return new String[]{"Climb-up"};
             }
         }
-        if (destinationDetails.getAssumedZ() < destinationDetails.getDestination().getZ()){
-            if (collection.contains("Climb-down")){
+        if (destinationDetails.getAssumedZ() < destinationDetails.getDestination().getZ()) {
+            if (collection.contains("Climb-down")) {
                 return new String[]{"Climb-down"};
             }
         }
-        if (destinationDetails.getAssumedY() > 5000 && destinationDetails.getDestination().getZ() == 0 && destinationDetails.getAssumedZ() == 0){
-            if (collection.contains("Climb-down")){
+        if (destinationDetails.getAssumedY() > 5000 && destinationDetails.getDestination().getZ() == 0 && destinationDetails.getAssumedZ() == 0) {
+            if (collection.contains("Climb-down")) {
                 return new String[]{"Climb-down"};
             }
         }
@@ -604,15 +606,15 @@ public class PathObjectHandler {
         return options;
     }
 
-    private static boolean clickOnObject(PTileObject obj, PathAnalyzer.DestinationDetails destinationDetails,  String... options){
+    private static boolean clickOnObject(PTileObject obj, PathAnalyzer.DestinationDetails destinationDetails, String... options) {
         boolean result;
 
-        if (isClosedTrapDoor(obj, options)){
+        if (isClosedTrapDoor(obj, options)) {
             result = handleTrapDoor(obj);
         } else {
             result = InteractionHelper.click(obj, options);
-            log.info("Interacting with (" +  obj.getSecond().getName() + ") at " + obj.getFirst().getWorldLocation() + " with options: " + Arrays.toString(options) + " " + (result ? "SUCCESS" : "FAIL"));
-            if ( obj.getWorldLocation().distanceTo2D(PPlayer.location()) > 1){
+            log.info("Interacting with (" + obj.getSecond().getName() + ") at " + obj.getFirst().getWorldLocation() + " with options: " + Arrays.toString(options) + " " + (result ? "SUCCESS" : "FAIL"));
+            if (obj.getWorldLocation().distanceTo2D(PPlayer.location()) > 1) {
                 // Wait for movement start
                 WaitFor.condition(PUtils.random(700, 900), () -> PPlayer.isMoving() ? WaitFor.Return.SUCCESS : WaitFor.Return.IGNORE);
                 log.info("Movement started");
@@ -627,7 +629,7 @@ public class PathObjectHandler {
             }
 
             // Wait a little bit more for any animations to end
-            PUtils.waitCondition((int)PUtils.randomNormal(2000, 3000), () -> PPlayer.get().getAnimation() == -1 && Reachable.getMap().canReach(destinationDetails.getAssumed()));
+            PUtils.waitCondition((int) PUtils.randomNormal(2000, 3000), () -> PPlayer.get().getAnimation() == -1 && Reachable.getMap().canReach(destinationDetails.getAssumed()));
             log.info("Animation stopped");
             //PUtils.sleepNormal(600, 800);
         }
@@ -635,9 +637,9 @@ public class PathObjectHandler {
         return result;
     }
 
-    private static boolean isStrongholdDoor(PTileObject object){
+    private static boolean isStrongholdDoor(PTileObject object) {
         List<String> doorNames = Arrays.asList("Gate of War", "Rickety door", "Oozing barrier", "Portal of Death");
-        return  doorNames.contains( object.getSecond().getName());
+        return doorNames.contains(object.getSecond().getName());
     }
 
     private static void handleStrongholdQuestions() {
@@ -688,13 +690,13 @@ public class PathObjectHandler {
     }
 
 
-    private static boolean isClosedTrapDoor(PTileObject object, String[] options){
-        return  (object.getSecond().getName().equals("Trapdoor") && Arrays.asList(options).contains("Open"));
+    private static boolean isClosedTrapDoor(PTileObject object, String[] options) {
+        return (object.getSecond().getName().equals("Trapdoor") && Arrays.asList(options).contains("Open"));
     }
 
-    private static boolean handleTrapDoor(PTileObject object){
+    private static boolean handleTrapDoor(PTileObject object) {
         Client client = PUtils.getClient();
-        if (getActions(object).contains("Open")){
+        if (getActions(object).contains("Open")) {
             if (!InteractionHelper.click(object, "Open", () -> {
                 var result = PObjects.getAllObjects().stream()
                         .filter(
@@ -706,11 +708,11 @@ public class PathObjectHandler {
                         .filter(pair -> pair.getFirst().getWorldLocation().distanceTo2DHypotenuse(object.getWorldLocation()) <= 2)
                         .collect(Collectors.toList());
 
-                if (result.size() > 0){
+                if (result.size() > 0) {
                     return WaitFor.Return.SUCCESS;
                 }
                 return WaitFor.Return.IGNORE;
-            })){
+            })) {
                 return false;
             } else {
                 var result = PObjects.getAllObjects().stream()
@@ -729,25 +731,25 @@ public class PathObjectHandler {
         return InteractionHelper.click(object, "Climb-down");
     }
 
-    public static List<String> getActions(PTileObject object){
+    public static List<String> getActions(PTileObject object) {
         List<String> list = new ArrayList<>();
-        if (object == null){
+        if (object == null) {
             return list;
         }
         ObjectComposition ObjectComposition = object.getDef();
-        if (ObjectComposition == null){
+        if (ObjectComposition == null) {
             return list;
         }
         String[] actions = ObjectComposition.getActions();
-        if (actions == null){
+        if (actions == null) {
             return list;
         }
         return Arrays.asList(actions);
     }
 
-    private static List<Integer> SLASH_WEAPONS = new ArrayList<>(Arrays.asList(1,4,9,10,12,17,20,21));
+    private static List<Integer> SLASH_WEAPONS = new ArrayList<>(Arrays.asList(1, 4, 9, 10, 12, 17, 20, 21));
 
-    private static boolean canLeftclickWeb(){
+    private static boolean canLeftclickWeb() {
         RSVarBit weaponType = RSVarBit.get(357);
         boolean haveKnife = PInventory.getAllItems()
                 .stream()
@@ -757,13 +759,13 @@ public class PathObjectHandler {
         return (weaponType != null && SLASH_WEAPONS.contains(weaponType.getValue())) || haveKnife;
     }
 
-    private static boolean useBladeOnWeb(PTileObject web){
+    private static boolean useBladeOnWeb(PTileObject web) {
         List<String> slashItemNames = Arrays.asList("whip", "sword", "dagger", "claws", "scimitar", " axe", "knife", "halberd", "machete", "rapier");
         var slashItems = PInventory.getAllItems()
                 .stream()
                 .filter(pair -> slashItemNames.stream().anyMatch(slashItemName -> pair.getSecond().getName().contains(slashItemName)))
                 .collect(Collectors.toList());
-        if(slashItems == null || slashItems.size() == 0) return false;
+        if (slashItems == null || slashItems.size() == 0) return false;
         return InteractionHelper.useItemOnObject(slashItems.get(0), web);
     }
 
