@@ -41,8 +41,11 @@ import net.runelite.client.plugins.paistisuite.api.WebWalker.walker_engine.navig
 import net.runelite.client.plugins.paistisuite.api.WebWalker.walker_engine.navigation_utils.SpiritTreeManager;
 import net.runelite.client.plugins.paistisuite.api.WebWalker.wrappers.RSTile;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.ui.overlay.worldmap.WorldMapPoint;
+import net.runelite.client.ui.overlay.worldmap.WorldMapPointManager;
 import net.runelite.client.util.ColorUtil;
 import net.runelite.http.api.RuneLiteAPI;
+import net.runelite.rs.api.RSClient;
 import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -56,11 +59,13 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @SuppressWarnings({"ConstantConditions", "UnnecessaryReturnStatement"})
 @Extension
@@ -69,7 +74,7 @@ import java.util.Set;
         name = "WebWalker",
         enabledByDefault = false,
         description = "Walks around with DaxWalker. Special thanks to Satoshi Oda, Manhattan, Illumine and Runemoro.",
-        tags = {"npcs", "items", "paisti", "satoshi"}
+        tags = {"teleport", "travel", "paisti", "satoshi"}
 )
 
 @Slf4j
@@ -80,9 +85,8 @@ public class WebWalker extends PScript {
 
     @Inject
     private WebWalkerConfig config;
-    RSTile targetLocation = null;
+    WorldPoint targetLocation = null;
     int nextRunAt = PUtils.random(55, 95);
-    private boolean allowTeleports;
     private boolean gnomeVillageComplete;
     private Point lastMenuOpenedPoint;
 
@@ -108,6 +112,9 @@ public class WebWalker extends PScript {
     private PluginManager pluginManager;
 
     @Inject
+    private WorldMapPointManager worldMapPointManager;
+
+    @Inject
     private WebWalkerDebugRenderer webWalkerDebugRenderer;
 
     @Inject
@@ -126,6 +133,7 @@ public class WebWalker extends PScript {
 
     @Override
     protected void startUp() {
+        configManager.setConfiguration(WebWalker.CONFIG_GROUP, WebWalkerConfig.WALKING, false);
         Teleport.TeleportType.TELEPORT_SPELL.setMoveCost(config.teleportSpellCost());
         Teleport.TeleportType.TELEPORT_SCROLL.setMoveCost(config.teleportScrollCost());
         Teleport.TeleportType.NONRECHARABLE_TELE.setMoveCost(config.nonrechargableTeleCost());
@@ -168,9 +176,7 @@ public class WebWalker extends PScript {
         }
 
         if (event.getMenuOption().contains("Autowalk")) {
-            WorldPoint wp = calculateMapPoint(client.isMenuOpen() ? lastMenuOpenedPoint : client.getMouseCanvasPosition());
-            allowTeleports = config.allowTeleports();
-            targetLocation = new RSTile(wp);
+            targetLocation = calculateMapPoint(client.isMenuOpen() ? lastMenuOpenedPoint : client.getMouseCanvasPosition());
             event.consume();
             try {
                 super.start();
@@ -196,16 +202,17 @@ public class WebWalker extends PScript {
     @Override
     protected void loop() {
         if (client.getGameState() != GameState.LOGGED_IN) return;
+        if (targetLocation == null) return;
         PlayerDetails details = PlayerDetails.generate();
 
         Point3D start = new Point3D(PPlayer.location());
         Point3D destination = new Point3D(targetLocation);
-        DaxWalker.getInstance().allowTeleports = allowTeleports;
+        DaxWalker.getInstance().allowTeleports = config.allowTeleports();
 
         List<PathResult> pathResults;
         boolean farmCapeToSpiritTree = false;
 
-        boolean goingNearestBank = targetLocation.equals(new RSTile(1, 1, 0));
+        boolean goingNearestBank = targetLocation.equals(new WorldPoint(1, 1, 0));
 
         if (goingNearestBank) {
             log.info("Start: " + start + ", Destination: Nearest Bank");
@@ -215,7 +222,7 @@ public class WebWalker extends PScript {
             pathResults = WebWalkerServerApi.getInstance().getBankPaths(new BulkBankPathRequest(PlayerDetails.generate(), pathRequestPairs));
         } else {
             log.info("Start: " + start + ", Destination: " + destination);
-            List<PathRequestPair> pathRequestPairs = DaxWalker.getInstance().allowTeleports ? DaxWalker.getInstance().getPathTeleports(targetLocation) : new ArrayList<>();
+            List<PathRequestPair> pathRequestPairs = DaxWalker.getInstance().allowTeleports ? DaxWalker.getInstance().getPathTeleports(new RSTile(targetLocation)) : new ArrayList<>();
             log.info("Teleport count: " + pathRequestPairs.size());
             pathRequestPairs.add(0, new PathRequestPair(start, destination));
 
@@ -295,7 +302,7 @@ public class WebWalker extends PScript {
         if (curatedPaths.size() == 0) {
             log.warn("No valid path found");
             PUtils.sendGameMessage("No valid path found.");
-            requestStop();
+            pathStatusMessage(pathResults);
             return;
         }
 
@@ -321,18 +328,7 @@ public class WebWalker extends PScript {
         if (pathResult == null) {
             log.warn("No valid path found");
             PUtils.sendGameMessage("No valid path found. Path status list: ");
-            Set<PathStatus> statuses = new HashSet<>();
-            for (PathResult r : pathResults) {
-                statuses.add(r.getPathStatus());
-            }
-            for (PathStatus r : statuses) {
-                PUtils.sendGameMessage(r.toString());
-            }
-            if (statuses.contains(PathStatus.RATE_LIMIT_EXCEEDED)) {
-                PUtils.sendGameMessage("Consider buying your own Web Walking API key at https://admin.dax.cloud/webwalker");
-            }
-            requestStop();
-            return;
+            pathStatusMessage(pathResults);
         }
         log.info("Movecost: " + DaxWalker.getInstance().getPathMoveCost(start, pathResult) + ", Path: " + pathResult);
 
@@ -349,6 +345,21 @@ public class WebWalker extends PScript {
             log.info("Path successfully finished!");
         } else {
             log.info("Failed at walking path");
+        }
+        requestStop();
+        return;
+    }
+
+    private void pathStatusMessage(List<PathResult> pathResults) {
+        Set<PathStatus> statuses = new HashSet<>();
+        for (PathResult r : pathResults) {
+            statuses.add(r.getPathStatus());
+        }
+        for (PathStatus r : statuses) {
+            PUtils.sendGameMessage(r.toString());
+        }
+        if (statuses.contains(PathStatus.RATE_LIMIT_EXCEEDED)) {
+            PUtils.sendGameMessage("Consider buying your own Web Walking API key at https://admin.dax.cloud/webwalker");
         }
         requestStop();
         return;
@@ -460,8 +471,16 @@ public class WebWalker extends PScript {
     private synchronized void onConfigChanged(ConfigChanged event) {
         if (!event.getGroup().equalsIgnoreCase("WebWalker")) return;
         if (event.getKey().equalsIgnoreCase("category")) {
-            if (!event.getNewValue().equalsIgnoreCase("FARMING")) {
-                configManager.setConfiguration("WebWalker", "catFarming", Farming.NONE);
+            if (event.getOldValue().equalsIgnoreCase("FARMING")) {
+                String farmingPage = configManager.getConfiguration("WebWalker", "catFarming");
+                configManager.setConfiguration("WebWalker", WebWalkerConfig.FARMING_PAGE, farmingPage);
+                configManager.setConfiguration("WebWalker", "catFarming", Farming.CACTUS);
+            }
+            if (event.getNewValue().equalsIgnoreCase("FARMING")) {
+                String farmingPage = configManager.getConfiguration("WebWalker", WebWalkerConfig.FARMING_PAGE);
+                if (farmingPage != null) {
+                    configManager.setConfiguration("WebWalker", "catFarming", farmingPage);
+                }
             }
         }
         if (event.getKey().equals("teleportSpellCost")) {
@@ -487,7 +506,6 @@ public class WebWalker extends PScript {
             return;
         }
 
-        allowTeleports = config.allowTeleports();
         targetLocation = getConfigTargetLocation();
         if (targetLocation == null) {
             PUtils.sendGameMessage("Invalid target location!");
@@ -510,7 +528,7 @@ public class WebWalker extends PScript {
         }
     }
 
-    private RSTile getConfigTargetLocation() {
+    private WorldPoint getConfigTargetLocation() {
         if (config.category().equals(Category.CUSTOM)) {
             String[] coordStrings = config.customLocation()
                     .strip()
@@ -518,7 +536,7 @@ public class WebWalker extends PScript {
                     .split(",");
 
             if (coordStrings.length != 3) return null;
-            return new RSTile(
+            return new WorldPoint(
                     Integer.parseInt(coordStrings[0]),
                     Integer.parseInt(coordStrings[1]),
                     Integer.parseInt(coordStrings[2]));
@@ -527,48 +545,66 @@ public class WebWalker extends PScript {
 
         switch (config.category()) {
             case BANKS:
-                return new RSTile(config.catBanks().getWorldPoint());
+                return config.catBanks().getWorldPoint();
+            case QUEST:
+                return getQuestLocation();
             case BARCRAWL:
-                return new RSTile(config.catBarcrawl().getWorldPoint());
+                return config.catBarcrawl().getWorldPoint();
             case CITIES:
-                return new RSTile(config.catCities().getWorldPoint());
+                return config.catCities().getWorldPoint();
             case FARMING:
                 return getFarmLocation();
             case GUILDS:
-                return new RSTile(config.catGuilds().getWorldPoint());
+                return config.catGuilds().getWorldPoint();
             case SKILLING:
-                return new RSTile(config.catSkilling().getWorldPoint());
+                return config.catSkilling().getWorldPoint();
             case SLAYER:
-                return new RSTile(config.catSlayer().getWorldPoint());
+                return config.catSlayer().getWorldPoint();
             case MISC:
-                return new RSTile(config.catMisc().getWorldPoint());
-            case NONE:
-                return new RSTile(1, 1, 0);
+                return config.catMisc().getWorldPoint();
         }
 
         return null;
     }
 
-
-    private RSTile getFarmLocation() {
+    private WorldPoint getFarmLocation() {
         if (config.category().equals(Category.FARMING)) {
             switch (config.catFarming()) {
                 case ALLOTMENTS:
-                    return new RSTile(config.catFarmAllotments().getWorldPoint());
+                    return config.catFarmAllotments().getWorldPoint();
                 case BUSHES:
-                    return new RSTile(config.catFarmBushes().getWorldPoint());
+                    return config.catFarmBushes().getWorldPoint();
                 case FRUIT_TREES:
-                    return new RSTile(config.catFarmFruitTrees().getWorldPoint());
+                    return config.catFarmFruitTrees().getWorldPoint();
                 case HERBS:
-                    return new RSTile(config.catFarmHerbs().getWorldPoint());
+                    return config.catFarmHerbs().getWorldPoint();
                 case HOPS:
-                    return new RSTile(config.catFarmHops().getWorldPoint());
+                    return config.catFarmHops().getWorldPoint();
                 case TREES:
-                    return new RSTile(config.catFarmTrees().getWorldPoint());
-                case NONE:
-                    return new RSTile(3316, 3205, 0);
+                    return config.catFarmTrees().getWorldPoint();
+                case CACTUS:
+                    return new WorldPoint(3316, 3205, 0);
             }
         }
+        return null;
+    }
+
+    private WorldPoint getQuestLocation() {
+        CopyOnWriteArrayList<WorldMapPoint> mapPoints = new CopyOnWriteArrayList<>();
+        try {
+            Field privateField = worldMapPointManager.getClass().getDeclaredField("worldMapPoints");
+            privateField.setAccessible(true);
+            mapPoints = (CopyOnWriteArrayList<WorldMapPoint>) privateField.get(worldMapPointManager);
+        } catch (Exception e) {
+            log.info("Error: ", e);
+        }
+
+        for (WorldMapPoint point : mapPoints) {
+            if (point.getName() != null && point.getName().equals("Quest Helper")) {
+                return point.getWorldPoint();
+            }
+        }
+        PUtils.sendGameMessage("No Quest Helper Location found!");
         return null;
     }
 }

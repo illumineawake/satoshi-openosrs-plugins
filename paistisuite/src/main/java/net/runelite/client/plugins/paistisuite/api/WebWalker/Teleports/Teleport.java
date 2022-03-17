@@ -358,7 +358,7 @@ public enum Teleport {
     ECTOPHIAL(
             TeleportType.UNLIMITED_TELE, new RSTile(3660, 3524, 0),
             () -> CachedBooleans.IN_MEMBERS_WORLD.getCachedBoolean().getBoolean() && HasItems.ECTOPHIAL_FILTER.getHasItem().checkHasItem(),
-            () -> RSItemHelper.click(Filters.Items.nameContains("Ectophial"), "Empty")
+            () -> RSItemHelper.click(Filters.Items.nameContains("Ectophial"), "Empty")//TODO check sleep
     ),
 
     LLETYA(
@@ -554,6 +554,12 @@ public enum Teleport {
                 }
                 return false;
             }
+    ),
+
+    VER_SINHAZA(
+            TeleportType.UNLIMITED_TELE, new RSTile(3649, 3230, 0),
+            () -> CachedBooleans.IN_MEMBERS_WORLD.getCachedBoolean().getBoolean() && HasItems.DRAKANS_MEDALLION.getHasItem().checkHasItem(),
+            () -> WearableItemTeleport.teleport(WearableItemTeleport.DRAKANS_MEDALLION_FILTER, "Ver Sinhaza")
     );//TODO add missing teleports
 
     public enum TeleportType {
@@ -667,6 +673,7 @@ public enum Teleport {
         REVENANT_CAVES(new HasItem(Filters.Items.idEquals(ItemID.REVENANT_CAVE_TELEPORT)), false),
         WATSON(new HasItem(Filters.Items.idEquals(ItemID.WATSON_TELEPORT)), false),
         ROYAL_SEED(new HasItem(Filters.Items.idEquals(ItemID.ROYAL_SEED_POD)), false),
+        DRAKANS_MEDALLION(new HasItem(WearableItemTeleport.DRAKANS_MEDALLION_FILTER)),
         ;
 
         @Getter

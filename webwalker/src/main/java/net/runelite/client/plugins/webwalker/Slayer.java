@@ -10,7 +10,6 @@ import net.runelite.api.coords.WorldPoint;
 
 @Getter
 public enum Slayer {
-    NONE(""),
     BURTHORPE_SLAYER("Turael", new WorldPoint(2931, 3536, 0)),
     FREMENNIK_CAVE("Fremennik Cave", new WorldPoint(2794, 3615, 0)),
     KARUULM_KONAR("Konar", new WorldPoint(1308, 3786, 0)),

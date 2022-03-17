@@ -11,7 +11,6 @@ import net.runelite.api.coords.WorldPoint;
 @Getter
 public enum Skilling
 {
-	NONE(""),
 	ARCEUUS_ESS_MINE("Arceuus Ess Mine", new WorldPoint(2533, 3572, 0)),
 	BARB_ASSAULT("Barb Assault", new WorldPoint(2533, 3572, 0)),
 	BARB_FISHING("Barbarian Fishing", new WorldPoint(2498, 3508, 0)),

@@ -11,7 +11,6 @@ import net.runelite.api.coords.WorldPoint;
 @Getter
 public enum Cities
 {
-	NONE(""),
 	LUMBRIDGE_CASTLE("Lumbridge Castle", new WorldPoint(3222, 3218, 0)),
 	PORT_SARIM("Port Sarim", new WorldPoint(3041, 3236, 0)),
 	RELLEKKA("Rellekka", new WorldPoint(2644, 3677, 0)),

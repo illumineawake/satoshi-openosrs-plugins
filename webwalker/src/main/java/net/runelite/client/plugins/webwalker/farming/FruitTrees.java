@@ -11,7 +11,6 @@ import net.runelite.api.coords.WorldPoint;
 @Getter
 public enum FruitTrees
 {
-	NONE("None"),
 	BRIMHAVEN("Brimhaven", new WorldPoint(2765, 3214, 0)),
 	CATHERBY("Catherby", new WorldPoint(2858, 3434, 0)),
 	FARMING_GUILD("Farming Guild", new WorldPoint(1243, 3757, 0)),

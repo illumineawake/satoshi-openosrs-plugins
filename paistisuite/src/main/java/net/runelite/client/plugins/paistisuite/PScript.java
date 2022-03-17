@@ -13,7 +13,7 @@ public abstract class PScript extends Plugin {
     private Thread scriptThread;
     private boolean isRunning = false;
 
-    public void start() throws Exception {
+    public void start() {
         if (scriptRunner != null) {
             log.error("Trying to start an already running script! Killing old runner");
             requestStop();
