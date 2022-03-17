@@ -46,6 +46,7 @@ public class WearableItemTeleport {
     public static final Predicate<PItem> CONSTRUCTION_CAPE_FILTER = Filters.Items.processedIdEquals(ItemID.CONSTRUCT_CAPE);
     public static final Predicate<PItem> SLAYER_RING = Filters.Items.processedIdEquals(ItemID.SLAYER_RING_1);
     public static final Predicate<PItem> ENCHANTED_LYRE_FILTER = Filters.Items.processedIdEquals(ItemID.ENCHANTED_LYRE1).and(i -> i.getId() != ItemID.ENCHANTED_LYRE);
+    public static final Predicate<PItem> DRAKANS_MEDALLION_FILTER = Filters.Items.processedIdEquals(ItemID.DRAKANS_MEDALLION);
 
 
     private WearableItemTeleport() {

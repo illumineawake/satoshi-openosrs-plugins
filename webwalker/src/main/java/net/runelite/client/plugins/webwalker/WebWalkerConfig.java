@@ -6,6 +6,7 @@ import net.runelite.client.plugins.webwalker.farming.*;
 @ConfigGroup(WebWalker.CONFIG_GROUP)
 public interface WebWalkerConfig extends Config {
     String WALKING = "walking";
+    String FARMING_PAGE = "farmingPage";
 
     @ConfigTitle(
             name = "Instructions",
@@ -47,7 +48,7 @@ public interface WebWalkerConfig extends Config {
             position = 100
     )
     default Category category() {
-        return Category.NONE;
+        return Category.BANKS;
     }
 
     @ConfigItem(
@@ -73,7 +74,7 @@ public interface WebWalkerConfig extends Config {
             unhideValue = "BARCRAWL"
     )
     default Barcrawl catBarcrawl() {
-        return Barcrawl.NONE;
+        return Barcrawl.BARBARIAN_ASSAULT;
     }
 
     @ConfigItem(
@@ -86,7 +87,7 @@ public interface WebWalkerConfig extends Config {
             unhideValue = "CITIES"
     )
     default Cities catCities() {
-        return Cities.NONE;
+        return Cities.LUMBRIDGE_CASTLE;
     }
 
     @ConfigItem(
@@ -99,7 +100,7 @@ public interface WebWalkerConfig extends Config {
             unhideValue = "FARMING"
     )
     default Farming catFarming() {
-        return Farming.NONE;
+        return Farming.CACTUS;
     }
 
     @ConfigItem(
@@ -112,7 +113,7 @@ public interface WebWalkerConfig extends Config {
             unhideValue = "ALLOTMENTS"
     )
     default Allotments catFarmAllotments() {
-        return Allotments.NONE;
+        return Allotments.ARDOUGNE;
     }
 
     @ConfigItem(
@@ -125,7 +126,7 @@ public interface WebWalkerConfig extends Config {
             unhideValue = "BUSHES"
     )
     default Bushes catFarmBushes() {
-        return Bushes.NONE;
+        return Bushes.ARDOUGNE;
     }
 
     @ConfigItem(
@@ -138,7 +139,7 @@ public interface WebWalkerConfig extends Config {
             unhideValue = "FRUIT_TREES"
     )
     default FruitTrees catFarmFruitTrees() {
-        return FruitTrees.NONE;
+        return FruitTrees.BRIMHAVEN;
     }
 
     @ConfigItem(
@@ -151,7 +152,7 @@ public interface WebWalkerConfig extends Config {
             unhideValue = "HERBS"
     )
     default Herbs catFarmHerbs() {
-        return Herbs.NONE;
+        return Herbs.ARDOUGNE;
     }
 
     @ConfigItem(
@@ -164,7 +165,7 @@ public interface WebWalkerConfig extends Config {
             unhideValue = "HOPS"
     )
     default Hops catFarmHops() {
-        return Hops.NONE;
+        return Hops.LUMBRIDGE;
     }
 
     @ConfigItem(
@@ -177,7 +178,7 @@ public interface WebWalkerConfig extends Config {
             unhideValue = "TREES"
     )
     default Trees catFarmTrees() {
-        return Trees.NONE;
+        return Trees.FALADOR;
     }
 
     @ConfigItem(
@@ -190,7 +191,7 @@ public interface WebWalkerConfig extends Config {
             unhideValue = "GUILDS"
     )
     default Guilds catGuilds() {
-        return Guilds.NONE;
+        return Guilds.FARMING_GUILD;
     }
 
     @ConfigItem(
@@ -203,7 +204,7 @@ public interface WebWalkerConfig extends Config {
             unhideValue = "SKILLING"
     )
     default Skilling catSkilling() {
-        return Skilling.NONE;
+        return Skilling.ARCEUUS_ESS_MINE;
     }
 
     @ConfigItem(
@@ -216,7 +217,7 @@ public interface WebWalkerConfig extends Config {
             unhideValue = "SLAYER"
     )
     default Slayer catSlayer() {
-        return Slayer.NONE;
+        return Slayer.BURTHORPE_SLAYER;
     }
 
     @ConfigItem(
@@ -229,7 +230,7 @@ public interface WebWalkerConfig extends Config {
             unhideValue = "MISC"
     )
     default Misc catMisc() {
-        return Misc.NONE;
+        return Misc.MISCELLANIA;
     }
 
     @ConfigItem(

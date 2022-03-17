@@ -11,7 +11,6 @@ import net.runelite.api.coords.WorldPoint;
 @Getter
 public enum Herbs
 {
-	NONE("None"),
 	ARDOUGNE("Ardougne", new WorldPoint(2668, 3375, 0)),
 	CATHERBY("Catherby", new WorldPoint(2811, 3465, 0)),
 	FALADOR("Falador", new WorldPoint(3056, 3310, 0)),

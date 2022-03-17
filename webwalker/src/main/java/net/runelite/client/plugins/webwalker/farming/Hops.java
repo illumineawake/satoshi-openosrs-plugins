@@ -11,10 +11,9 @@ import net.runelite.api.coords.WorldPoint;
 @Getter
 public enum Hops
 {
-	NONE("None"),
-	LUMBRIDGE("Lumbridge", new WorldPoint(3231, 3312, 0)),
-	SEERS_VILLAGE("Seers' Village", new WorldPoint(2670, 3522, 0)),
-	YANILLE("Yanille", new WorldPoint(2578, 3102, 0));
+	LUMBRIDGE("Lumbridge", new WorldPoint(3232, 3317, 0)),
+	YANILLE("Yanille", new WorldPoint(2573, 3106, 0)),
+	SEERS_VILLAGE("Seers' Village", new WorldPoint(2670, 3522, 0));
 
 	private final String name;
 	private WorldPoint worldPoint;

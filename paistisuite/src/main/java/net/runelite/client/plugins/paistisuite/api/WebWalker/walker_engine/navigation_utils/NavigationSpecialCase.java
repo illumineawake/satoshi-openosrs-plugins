@@ -238,7 +238,13 @@ public class NavigationSpecialCase {
         YANILLE_BALANCE_EDGE_NORTH(2580, 9520, 0),
         YANILLE_BALANCE_EDGE_SOUTH(2580, 9512, 0),
         YANILLE_MONKEY_BARS_WEST(2572, 9506, 0),
-        YANILLE_MONKEY_BARS_EAST(2578, 9506, 0);
+        YANILLE_MONKEY_BARS_EAST(2578, 9506, 0),
+
+        LIZARDMAN_CANYON_EAST(1475, 3687, 0),
+        LIZARDMAN_CANYON_WEST(1470, 3687, 0),
+
+        LIZARDMAN_SHAMANS_CANYON_EAST(1460, 3690, 0),
+        LIZARDMAN_SHAMANS_CANYON_WEST(1456, 3690, 0);
 
 
         int x, y, z;
@@ -973,6 +979,19 @@ public class NavigationSpecialCase {
             case YANILLE_MONKEY_BARS_WEST:
                 return clickObject(Filters.Objects.nameEquals("Monkeybars"), "Swing across",
                         () -> PPlayer.location().distanceTo(YANILLE_MONKEY_BARS_EAST.getRSTile().toWorldPoint()) <= 2 ? WaitFor.Return.SUCCESS : WaitFor.Return.IGNORE);
+
+            case LIZARDMAN_CANYON_WEST:
+                return clickObject(Filters.Objects.nameEquals("Handholds"), "Climb",
+                        () -> PPlayer.location().equals(LIZARDMAN_CANYON_EAST.getRSTile().toWorldPoint()) ? WaitFor.Return.SUCCESS : WaitFor.Return.IGNORE);
+            case LIZARDMAN_CANYON_EAST:
+                return clickObject(Filters.Objects.nameEquals("Handholds"), "Climb",
+                        () -> PPlayer.location().equals(LIZARDMAN_CANYON_WEST.getRSTile().toWorldPoint()) ? WaitFor.Return.SUCCESS : WaitFor.Return.IGNORE);
+            case LIZARDMAN_SHAMANS_CANYON_EAST:
+                return clickObject(Filters.Objects.nameEquals("Handholds"), "Climb",
+                        () -> PPlayer.location().equals(LIZARDMAN_SHAMANS_CANYON_WEST.getRSTile().toWorldPoint()) ? WaitFor.Return.SUCCESS : WaitFor.Return.IGNORE);
+            case LIZARDMAN_SHAMANS_CANYON_WEST:
+                return clickObject(Filters.Objects.nameEquals("Handholds"), "Climb",
+                        () -> PPlayer.location().equals(LIZARDMAN_SHAMANS_CANYON_EAST.getRSTile().toWorldPoint()) ? WaitFor.Return.SUCCESS : WaitFor.Return.IGNORE);
         }
 
         return false;
@@ -980,7 +999,7 @@ public class NavigationSpecialCase {
 
     public static boolean handleZeahBoats(String locationOption) {
         String travelOption = "Travel";
-        List<NPC> npcs = PObjects.findAllNPCs(Filters.NPCs.nameEquals("Veos", "Captain Magoro"));
+        List<NPC> npcs = PObjects.findAllNPCs(Filters.NPCs.nameEquals("Veos", "Captain Magoro", "Cabin Boy Herbert"));
         if (npcs.size() > 0) {
             String[] actions = npcs.get(0).getTransformedComposition().getActions();
             if (actions != null) {
@@ -998,7 +1017,7 @@ public class NavigationSpecialCase {
                 }
             }
         }
-        if (NPCInteraction.clickNpc(Filters.NPCs.nameEquals("Veos", "Captain Magoro"), travelOption)) {
+        if (NPCInteraction.clickNpc(Filters.NPCs.nameEquals("Veos", "Captain Magoro", "Cabin Boy Herbert"), travelOption)) {
             WorldPoint current = PPlayer.location();
             if (WaitFor.condition(8000, () -> (ShipUtils.isOnShip() || PPlayer.location().distanceTo(current) > 20) ? WaitFor.Return.SUCCESS : WaitFor.Return.IGNORE) != WaitFor.Return.SUCCESS) {
                 return false;
@@ -1011,7 +1030,7 @@ public class NavigationSpecialCase {
 
     private static boolean handleFirstTripToZeah(String locationOption) {
         log.info("First trip to zeah");
-        if (NPCInteraction.talkTo(Filters.NPCs.nameEquals("Veos", "Captain Magoro"), new String[]{"Talk-to"}, new String[]{
+        if (NPCInteraction.talkTo(Filters.NPCs.nameEquals("Veos", "Captain Magoro", "Cabin Boy Herbert"), new String[]{"Talk-to"}, new String[]{
                 locationOption, "Can you take me somewhere?", "That's great, can you take me there please?", "Can you take me to Great Kourend?"})) {
             WorldPoint current = PPlayer.location();
             if (WaitFor.condition(8000, () -> (ShipUtils.isOnShip() || PPlayer.location().distanceTo(current) > 20) ? WaitFor.Return.SUCCESS : WaitFor.Return.IGNORE) != WaitFor.Return.SUCCESS) {

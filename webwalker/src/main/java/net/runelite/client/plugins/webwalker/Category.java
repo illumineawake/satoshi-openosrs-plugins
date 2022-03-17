@@ -10,8 +10,8 @@ import lombok.Getter;
 @Getter
 public enum Category
 {
-	NONE("None"),
 	BANKS("Banks"),
+	QUEST("Quest"),
 	BARCRAWL("Barcrawl"),
 	CITIES("Cities"),
 	FARMING("Farming"),

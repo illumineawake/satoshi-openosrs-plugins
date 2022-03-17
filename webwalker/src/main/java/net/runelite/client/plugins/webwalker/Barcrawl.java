@@ -11,7 +11,6 @@ import net.runelite.api.coords.WorldPoint;
 @Getter
 public enum Barcrawl
 {
-	NONE(""),
 	BARBARIAN_ASSAULT("Barb Assault", new WorldPoint(2533, 3572, 0)),
 	JOLLY_BOAR_INN("Jolly Boar Inn", new WorldPoint(3280, 3494, 0)),
 	BLUE_MOON_INN("Blue Moon Inn", new WorldPoint(3215, 3395, 0)),

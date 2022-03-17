@@ -10,13 +10,13 @@ import lombok.Getter;
 @Getter
 public enum Farming
 {
-	NONE("None"),
 	ALLOTMENTS("Allotments"),
 	BUSHES("Bushes"),
 	FRUIT_TREES("Fruit Trees"),
 	HERBS("Herbs"),
 	HOPS("Hops"),
-	TREES("Trees");
+	TREES("Trees"),
+	CACTUS("Cactus");
 
 	private final String name;
 
