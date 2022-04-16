@@ -358,7 +358,7 @@ public enum Teleport {
     ECTOPHIAL(
             TeleportType.UNLIMITED_TELE, new RSTile(3660, 3524, 0),
             () -> CachedBooleans.IN_MEMBERS_WORLD.getCachedBoolean().getBoolean() && HasItems.ECTOPHIAL_FILTER.getHasItem().checkHasItem(),
-            () -> RSItemHelper.click(Filters.Items.nameContains("Ectophial"), "Empty")//TODO check sleep
+            () -> RSItemHelper.click(Filters.Items.nameContains("Ectophial"), "Empty")
     ),
 
     LLETYA(
@@ -560,6 +560,30 @@ public enum Teleport {
             TeleportType.UNLIMITED_TELE, new RSTile(3649, 3230, 0),
             () -> CachedBooleans.IN_MEMBERS_WORLD.getCachedBoolean().getBoolean() && HasItems.DRAKANS_MEDALLION.getHasItem().checkHasItem(),
             () -> WearableItemTeleport.teleport(WearableItemTeleport.DRAKANS_MEDALLION_FILTER, "Ver Sinhaza")
+    ),
+
+    DESERT_AMULET4(
+            TeleportType.UNLIMITED_TELE, new RSTile(3482, 3231, 0),
+            () -> CachedBooleans.IN_MEMBERS_WORLD.getCachedBoolean().getBoolean() && HasItems.DESERT_AMULET4.getHasItem().checkHasItem(),
+            () -> {
+                if (RSItemHelper.click(Filters.Items.idEquals(ItemID.DESERT_AMULET_4), "Nardah")) {
+                    PUtils.sleep(3000);
+                    return true;
+                }
+                return false;
+            }
+    ),
+
+    MORY_LEGS3(
+            TeleportType.UNLIMITED_TELE, new RSTile(3427, 2926, 0),
+            () -> CachedBooleans.IN_MEMBERS_WORLD.getCachedBoolean().getBoolean() && HasItems.MORY_LEGS3.getHasItem().checkHasItem(),
+            () -> {
+                if (RSItemHelper.click(Filters.Items.idEquals(Set.of(ItemID.MORYTANIA_LEGS_3, ItemID.MORYTANIA_LEGS_4)), "Teleport")) {
+                    PUtils.sleep(3000);
+                    return true;
+                }
+                return false;
+            }
     );//TODO add missing teleports
 
     public enum TeleportType {
@@ -674,6 +698,8 @@ public enum Teleport {
         WATSON(new HasItem(Filters.Items.idEquals(ItemID.WATSON_TELEPORT)), false),
         ROYAL_SEED(new HasItem(Filters.Items.idEquals(ItemID.ROYAL_SEED_POD)), false),
         DRAKANS_MEDALLION(new HasItem(WearableItemTeleport.DRAKANS_MEDALLION_FILTER)),
+        DESERT_AMULET4(new HasItem(Filters.Items.idEquals(ItemID.DESERT_AMULET_4))),
+        MORY_LEGS3(new HasItem(Filters.Items.idEquals(Set.of(ItemID.MORYTANIA_LEGS_3, ItemID.MORYTANIA_LEGS_4)))),
         ;
 
         @Getter

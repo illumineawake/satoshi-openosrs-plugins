@@ -50,7 +50,7 @@ public enum Prayers
 
 	private final String name;
 	private final WidgetInfo info;
-	private final Varbits varbitInfo;
+	private final int varbitInfo;
 	private static final Map<String, WidgetInfo> map;
 
 	static
