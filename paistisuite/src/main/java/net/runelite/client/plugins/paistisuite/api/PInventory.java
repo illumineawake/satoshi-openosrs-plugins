@@ -1,6 +1,7 @@
 package net.runelite.client.plugins.paistisuite.api;
 
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Point;
 import net.runelite.api.*;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
@@ -8,7 +9,10 @@ import net.runelite.api.widgets.WidgetItem;
 import net.runelite.client.plugins.paistisuite.PaistiSuite;
 import net.runelite.client.plugins.paistisuite.api.types.PItem;
 
-import java.util.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -33,6 +37,98 @@ public class PInventory {
         return PaistiSuite.getInstance().clientExecutor.schedule(() -> PaistiSuite.getInstance().itemManager.getItemComposition(item.getId()), "getItemDef");
     }
 
+    private static WidgetItem createWidgetItem(Widget item) {
+        boolean isDragged = item.isWidgetItemDragged(item.getItemId());
+
+        int dragOffsetX = 0;
+        int dragOffsetY = 0;
+
+        if (isDragged) {
+            Point p = item.getWidgetItemDragOffsets();
+            dragOffsetX = p.getX();
+            dragOffsetY = p.getY();
+        }
+        // set bounds to same size as default inventory
+        Rectangle bounds = item.getBounds();
+        bounds.setBounds(bounds.x - 1, bounds.y - 1, 32, 32);
+        Rectangle dragBounds = item.getBounds();
+        dragBounds.setBounds(bounds.x + dragOffsetX, bounds.y + dragOffsetY, 32, 32);
+
+        return new WidgetItem(item.getItemId(), item.getItemQuantity(), item.getIndex(), bounds, item, dragBounds);
+    }
+
+    public static Collection<WidgetItem> getWidgetItems() {
+        Widget geWidget = PUtils.getClient().getWidget(WidgetInfo.GRAND_EXCHANGE_INVENTORY_ITEMS_CONTAINER);
+
+        boolean geOpen = geWidget != null && !geWidget.isHidden();
+        boolean bankOpen = !geOpen && PUtils.getClient().getItemContainer(InventoryID.BANK) != null;
+
+        Widget inventoryWidget = PUtils.getClient().getWidget(
+                bankOpen ? WidgetInfo.BANK_INVENTORY_ITEMS_CONTAINER :
+                        geOpen ? WidgetInfo.GRAND_EXCHANGE_INVENTORY_ITEMS_CONTAINER :
+                                WidgetInfo.INVENTORY
+        );
+
+        if (inventoryWidget == null) {
+            return new ArrayList<>();
+        }
+
+        if (!bankOpen && !geOpen && inventoryWidget.isHidden()) {
+            refreshInventory();
+        }
+
+        Widget[] children = inventoryWidget.getDynamicChildren();
+
+        if (children == null) {
+            return new ArrayList<>();
+        }
+
+        Collection<WidgetItem> widgetItems = new ArrayList<>();
+        for (Widget item : children) {
+            if (item.getItemId() != 6512) {
+                widgetItems.add(createWidgetItem(item));
+            }
+        }
+
+        return widgetItems;
+    }
+
+    public static void refreshInventory() {
+        if (PUtils.getClient().isClientThread()) {
+            PUtils.getClient().runScript(6009, 9764864, 28, 1, -1);
+        } else {
+            PaistiSuite.getInstance().clientExecutor.schedule(() -> PUtils.getClient().runScript(6009, 9764864, 28, 1, -1), "runScript6009");
+        }
+    }
+
+    public static WidgetItem getWidgetItemInSlot(int slot) {
+        Widget geWidget = PUtils.getClient().getWidget(WidgetInfo.GRAND_EXCHANGE_INVENTORY_ITEMS_CONTAINER);
+
+        boolean geOpen = geWidget != null && !geWidget.isHidden();
+        boolean bankOpen = !geOpen && PUtils.getClient().getItemContainer(InventoryID.BANK) != null;
+
+        Widget inventoryWidget = PUtils.getClient().getWidget(
+                bankOpen ? WidgetInfo.BANK_INVENTORY_ITEMS_CONTAINER :
+                        geOpen ? WidgetInfo.GRAND_EXCHANGE_INVENTORY_ITEMS_CONTAINER :
+                                WidgetInfo.INVENTORY
+        );
+
+        if (inventoryWidget == null) {
+            return new WidgetItem(-1, 0, slot, null, null, null);
+        }
+
+        if (!bankOpen && !geOpen && inventoryWidget.isHidden()) {
+            refreshInventory();
+        }
+
+        Widget[] children = inventoryWidget.getDynamicChildren();
+
+        if (children == null || slot >= children.length) {
+            return new WidgetItem(-1, 0, slot, null, null, null);
+        }
+        return createWidgetItem(children[slot]);
+    }
+
     public static boolean isFull() {
         return getEmptySlots() <= 0;
     }
@@ -45,7 +141,7 @@ public class PInventory {
         return PUtils.clientOnly(() -> {
             Widget inventoryWidget = PUtils.getClient().getWidget(WidgetInfo.INVENTORY);
             if (inventoryWidget != null) {
-                return 28 - inventoryWidget.getWidgetItems().size();
+                return 28 - getWidgetItems().size();
             } else {
                 return -1;
             }
@@ -56,7 +152,7 @@ public class PInventory {
         return PUtils.clientOnly(() -> {
             Widget inventoryWidget = PUtils.getClient().getWidget(WidgetInfo.INVENTORY);
             if (inventoryWidget == null) return new ArrayList<PItem>();
-            Collection<WidgetItem> widgetItems = inventoryWidget.getWidgetItems();
+            Collection<WidgetItem> widgetItems = getWidgetItems();
             List<PItem> pItems = widgetItems
                     .stream()
                     .map(PItem::new)

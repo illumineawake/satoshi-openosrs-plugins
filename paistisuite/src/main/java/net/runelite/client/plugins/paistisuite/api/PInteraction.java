@@ -1,7 +1,9 @@
 package net.runelite.client.plugins.paistisuite.api;
 
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.*;
+import net.runelite.api.GameObject;
+import net.runelite.api.MenuAction;
+import net.runelite.api.NPC;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.plugins.paistisuite.api.types.PGroundItem;
@@ -56,14 +58,14 @@ public class PInteraction {
                     return false;
             }
             MenuAction finalActionOp = actionOp;
-            if (to.getFirst() instanceof GameObject){
+            if (to.getFirst() instanceof GameObject) {
                 PUtils.getClient().invokeMenuAction(
                         "",
                         "PaistiSuite",
                         to.getFirst().getId(),
                         finalActionOp.getId(),
-                        ((GameObject)to.getFirst()).getSceneMinLocation().getX(),
-                        ((GameObject)to.getFirst()).getSceneMinLocation().getY());
+                        ((GameObject) to.getFirst()).getSceneMinLocation().getX(),
+                        ((GameObject) to.getFirst()).getSceneMinLocation().getY());
             } else {
                 PUtils.getClient().invokeMenuAction(
                         "",
@@ -80,7 +82,7 @@ public class PInteraction {
         }, "interact_tileObject");
     }
 
-    public static Boolean groundItem(PGroundItem item, String ...actions){
+    public static Boolean groundItem(PGroundItem item, String... actions) {
         return PUtils.clientOnly(() -> {
             if (item == null) return false;
             if (item.getDef() == null) return false;
@@ -136,18 +138,19 @@ public class PInteraction {
         }, "interact_GroundItem");
     }
 
-    public static Boolean useItemOnItem(PItem item, PItem target){
+    public static Boolean useItemOnItem(PItem item, PItem target) {
         return PUtils.clientOnly(() -> {
-            if (item == null || target == null || item.getWidgetItem() == null || target.getWidgetItem() == null) return false;
+            if (item == null || target == null || item.getWidgetItem() == null || target.getWidgetItem() == null)
+                return false;
             if (item.equals(target)) return false;
-            PUtils.getClient().setSelectedItemWidget(WidgetInfo.INVENTORY.getId());
-            PUtils.getClient().setSelectedItemSlot(item.getWidgetItem().getIndex());
-            PUtils.getClient().setSelectedItemID(item.getWidgetItem().getId());
+            PUtils.getClient().setSelectedSpellWidget(WidgetInfo.INVENTORY.getId());
+            PUtils.getClient().setSelectedSpellChildIndex(item.getWidgetItem().getIndex());
+            PUtils.getClient().setSelectedSpellItemId(item.getWidgetItem().getId());
             PUtils.getClient().invokeMenuAction(
                     "",
                     "PaistiSuite",
-                    target.getWidgetItem().getId(),
-                    MenuAction.ITEM_USE_ON_WIDGET_ITEM.getId(),
+                    0,
+                    MenuAction.WIDGET_TARGET_ON_WIDGET.getId(),
                     target.getWidgetItem().getIndex(),
                     WidgetInfo.INVENTORY.getId());
             PUtils.getClient().setMouseIdleTicks(0);
@@ -156,9 +159,10 @@ public class PInteraction {
         }, "interact_useItemOnItem");
     }
 
-    public static Boolean useSpellOnItem(Spells spell, PItem target){
+    public static Boolean useSpellOnItem(Spells spell, PItem target) {
         return PUtils.clientOnly(() -> {
-            if (spell == null || target == null || target.getWidgetItem() == null || target.itemType != PItem.PItemType.INVENTORY) return false;
+            if (spell == null || target == null || target.getWidgetItem() == null || target.itemType != PItem.PItemType.INVENTORY)
+                return false;
             Widget spellWidget = PWidgets.get(spell.getInfo());
             if (spellWidget == null) return false;
             PUtils.getClient().setSelectedSpellWidget(spellWidget.getId());
@@ -166,8 +170,8 @@ public class PInteraction {
             PUtils.getClient().invokeMenuAction(
                     "",
                     "PaistiSuite",
-                    target.getWidgetItem().getId(),
-                    MenuAction.ITEM_USE_ON_WIDGET.getId(),
+                    0,
+                    MenuAction.WIDGET_TARGET_ON_WIDGET.getId(),
                     target.getWidgetItem().getIndex(),
                     WidgetInfo.INVENTORY.getId());
             PUtils.getClient().setMouseIdleTicks(0);
@@ -176,7 +180,7 @@ public class PInteraction {
         }, "interact_useSpellOnItem");
     }
 
-    private static Boolean equippedItem(PItem item, String ...actions){
+    private static Boolean equippedItem(PItem item, String... actions) {
         if (item == null) return false;
         return PUtils.clientOnly(() -> {
             if (item.getWidget() == null) return false;
@@ -184,7 +188,7 @@ public class PInteraction {
         }, "interact_equippedItem");
     }
 
-    private static Boolean bankedItem(PItem item, String ...actions){
+    private static Boolean bankedItem(PItem item, String... actions) {
         if (item == null) return false;
         return PUtils.clientOnly(() -> {
             if (item.getWidget() == null) return false;
@@ -192,7 +196,7 @@ public class PInteraction {
         }, "interact_bankItem");
     }
 
-    private static Boolean shopItem(PItem item, String ...actions){
+    private static Boolean shopItem(PItem item, String... actions) {
         if (item == null) return false;
         return PUtils.clientOnly(() -> {
             if (item.getWidget() == null) return false;
@@ -200,7 +204,7 @@ public class PInteraction {
         }, "interact_shopItem");
     }
 
-    private static Boolean sellOrDepositItem(PItem item, String ...actions){
+    private static Boolean sellOrDepositItem(PItem item, String... actions) {
         if (item == null) return false;
         return PUtils.clientOnly(() -> {
             if (item.getWidget() == null) return false;
@@ -208,7 +212,7 @@ public class PInteraction {
         }, "interact_sellOrDepositItem");
     }
 
-    private static Boolean regularInventoryItem(PItem item, String ...actions){
+    private static Boolean regularInventoryItem(PItem item, String... actions) {
         if (item == null) return false;
         return PUtils.clientOnly(() -> {
             if (item.itemType != PItem.PItemType.INVENTORY) return false;
@@ -230,32 +234,31 @@ public class PInteraction {
 
             if (!found) return false;
 
-            MenuAction actionOp = null;
+            int actionID;
             switch (actionIndex) {
                 case 0:
-                    actionOp = MenuAction.ITEM_FIRST_OPTION;
+                    actionID = 2;
                     break;
                 case 1:
-                    actionOp = MenuAction.ITEM_SECOND_OPTION;
+                    actionID = 3;
                     break;
                 case 2:
-                    actionOp = MenuAction.ITEM_THIRD_OPTION;
+                    actionID = 4;
                     break;
                 case 3:
-                    actionOp = MenuAction.ITEM_FOURTH_OPTION;
+                    actionID = 6;
                     break;
                 case 4:
-                    actionOp = MenuAction.ITEM_FIFTH_OPTION;
+                    actionID = 7;
                     break;
                 default:
                     return false;
             }
-
-            MenuAction finalActionOp = actionOp;
+            MenuAction finalActionOp = actionID > 5 ? MenuAction.CC_OP_LOW_PRIORITY : MenuAction.CC_OP;
             PUtils.getClient().invokeMenuAction(
                     "",
                     "PaistiSuite",
-                    item.getId(),
+                    actionID,
                     finalActionOp.getId(),
                     item.getWidgetItem().getIndex(),
                     WidgetInfo.INVENTORY.getId());
@@ -265,7 +268,7 @@ public class PInteraction {
         }, "interact_regularInventoryItem");
     }
 
-    public static Boolean item(PItem item, String ...actions){
+    public static Boolean item(PItem item, String... actions) {
         return PUtils.clientOnly(() -> {
             if (item == null) return false;
             if (item.itemType == PItem.PItemType.EQUIPMENT) return equippedItem(item, actions);
@@ -289,30 +292,30 @@ public class PInteraction {
         }, "clickItem");
     }
 
-    public static Boolean useItemOnTileObject(PItem item, PTileObject to){
+    public static Boolean useItemOnTileObject(PItem item, PTileObject to) {
         return PUtils.clientOnly(() -> {
             if (item == null || to == null || item.getWidgetItem() == null || to.tileObject == null) return false;
 
-            if (to.getFirst() instanceof GameObject){
-                PUtils.getClient().setSelectedItemWidget(WidgetInfo.INVENTORY.getId());
-                PUtils.getClient().setSelectedItemSlot(item.getWidgetItem().getIndex());
-                PUtils.getClient().setSelectedItemID(item.getId());
+            if (to.getFirst() instanceof GameObject) {
+                PUtils.getClient().setSelectedSpellWidget(WidgetInfo.INVENTORY.getId());
+                PUtils.getClient().setSelectedSpellChildIndex(item.getWidgetItem().getIndex());
+                PUtils.getClient().setSelectedSpellItemId(item.getId());
                 PUtils.getClient().invokeMenuAction(
                         "",
                         "PaistiSuite",
                         to.getFirst().getId(),
-                        MenuAction.ITEM_USE_ON_GAME_OBJECT.getId(),
-                        ((GameObject)to.getFirst()).getSceneMinLocation().getX(),
-                        ((GameObject)to.getFirst()).getSceneMinLocation().getY());
+                        MenuAction.WIDGET_TARGET_ON_GAME_OBJECT.getId(),
+                        ((GameObject) to.getFirst()).getSceneMinLocation().getX(),
+                        ((GameObject) to.getFirst()).getSceneMinLocation().getY());
             } else {
-                PUtils.getClient().setSelectedItemWidget(WidgetInfo.INVENTORY.getId());
-                PUtils.getClient().setSelectedItemSlot(item.getWidgetItem().getIndex());
-                PUtils.getClient().setSelectedItemID(item.getId());
+                PUtils.getClient().setSelectedSpellWidget(WidgetInfo.INVENTORY.getId());
+                PUtils.getClient().setSelectedSpellChildIndex(item.getWidgetItem().getIndex());
+                PUtils.getClient().setSelectedSpellItemId(item.getId());
                 PUtils.getClient().invokeMenuAction(
                         "",
                         "PaistiSuite",
                         to.getFirst().getId(),
-                        MenuAction.ITEM_USE_ON_GAME_OBJECT.getId(),
+                        MenuAction.WIDGET_TARGET_ON_GAME_OBJECT.getId(),
                         (to.getFirst()).getWorldLocation().getX() - PUtils.getClient().getBaseX(),
                         (to.getFirst()).getWorldLocation().getY() - PUtils.getClient().getBaseY());
             }
@@ -394,14 +397,14 @@ public class PInteraction {
                 log.error("Unable to get transformed def for NPC");
                 return false;
             }
-            PUtils.getClient().setSelectedItemWidget(WidgetInfo.INVENTORY.getId());
-            PUtils.getClient().setSelectedItemSlot(item.getWidgetItem().getIndex());
-            PUtils.getClient().setSelectedItemID(item.getWidgetItem().getId());
+            PUtils.getClient().setSelectedSpellWidget(WidgetInfo.INVENTORY.getId());
+            PUtils.getClient().setSelectedSpellChildIndex(item.getWidgetItem().getIndex());
+            PUtils.getClient().setSelectedSpellItemId(item.getWidgetItem().getId());
             PUtils.getClient().invokeMenuAction(
                     "",
                     "PaistiSuite",
                     npc.getIndex(),
-                    MenuAction.ITEM_USE_ON_NPC.getId(),
+                    MenuAction.WIDGET_TARGET_ON_NPC.getId(),
                     0,
                     0);
             PUtils.getClient().setMouseIdleTicks(0);
@@ -453,8 +456,8 @@ public class PInteraction {
             final int widgetId = widget.getId();
             int childIndex = -1;
             int searchIndex = 0;
-            if (widget.getParent() != null && widget.getParent().getChildren() != null){
-                for (Widget c : widget.getParent().getChildren()){
+            if (widget.getParent() != null && widget.getParent().getChildren() != null) {
+                for (Widget c : widget.getParent().getChildren()) {
                     if (c.equals(widget)) {
                         childIndex = searchIndex;
                         break;
@@ -475,5 +478,4 @@ public class PInteraction {
             return true;
         }, "interact_widget");
     }
-
 }
