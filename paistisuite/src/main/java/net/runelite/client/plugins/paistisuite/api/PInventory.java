@@ -123,9 +123,14 @@ public class PInventory {
 
         Widget[] children = inventoryWidget.getDynamicChildren();
 
-        if (children == null || slot >= children.length) {
+        if (children == null || slot >= children.length || slot < 0) {
             return new WidgetItem(-1, 0, slot, null, null, null);
         }
+
+        if (children[slot].getItemId() == 6512) {
+            return new WidgetItem(-1, 0, slot, null, null, null);
+        }
+
         return createWidgetItem(children[slot]);
     }
 
