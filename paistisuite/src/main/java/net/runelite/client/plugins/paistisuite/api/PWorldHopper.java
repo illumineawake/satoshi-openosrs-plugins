@@ -7,7 +7,7 @@ import net.runelite.http.api.worlds.World;
 import net.runelite.http.api.worlds.WorldResult;
 import net.runelite.http.api.worlds.WorldType;
 import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.client.plugins.paistisuite.PaistiSuite;
+import net.runelite.client.plugins.paistisuite.iPaistiSuite;
 import net.runelite.client.util.WorldUtil;
 
 import java.util.EnumSet;
@@ -56,7 +56,7 @@ public class PWorldHopper {
 
     public static boolean hop()
     {
-        WorldResult worldResult = PaistiSuite.getInstance().worldService.getWorlds();
+        WorldResult worldResult = iPaistiSuite.getInstance().worldService.getWorlds();
         if (worldResult == null || PUtils.getClient().getGameState() != GameState.LOGGED_IN)
         {
             return false;
@@ -95,7 +95,7 @@ public class PWorldHopper {
     {
         if (PBanking.isBankOpen()) PBanking.closeBank();
         if (PShopping.isShopOpen()) PShopping.closeShop();
-        WorldResult worldResult = PaistiSuite.getInstance().worldService.getWorlds();
+        WorldResult worldResult = iPaistiSuite.getInstance().worldService.getWorlds();
         // Don't try to hop if the world doesn't exist
         World world = worldResult.findWorld(worldId);
         if (world == null)

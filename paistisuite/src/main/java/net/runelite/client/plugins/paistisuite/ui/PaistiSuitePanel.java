@@ -15,7 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.border.EmptyBorder;
-import net.runelite.client.plugins.paistisuite.PaistiSuite;
+import net.runelite.client.plugins.paistisuite.iPaistiSuite;
 import net.runelite.client.ui.ClientUI;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
@@ -33,20 +33,20 @@ public class PaistiSuitePanel extends PluginPanel
 	private static final ImageIcon HELP_ICON;
 	private static final ImageIcon HELP_HOVER_ICON;
 
-	private final PaistiSuite suite;
+	private final iPaistiSuite suite;
 
 	static
 	{
 		final BufferedImage helpIcon =
 			ImageUtil.recolorImage(
-				ImageUtil.getResourceStreamFromClass(PaistiSuite.class, "help.png"), ColorScheme.GRAND_EXCHANGE_PRICE
+				ImageUtil.getResourceStreamFromClass(iPaistiSuite.class, "help.png"), ColorScheme.GRAND_EXCHANGE_PRICE
 			);
 		HELP_ICON = new ImageIcon(helpIcon);
 		HELP_HOVER_ICON = new ImageIcon(ImageUtil.alphaOffset(helpIcon, 0.53f));
 	}
 
 	@Inject
-	public PaistiSuitePanel(PaistiSuite suite)
+	public PaistiSuitePanel(iPaistiSuite suite)
 	{
 		super(false);
 		this.suite = suite;

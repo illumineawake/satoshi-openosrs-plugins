@@ -10,20 +10,16 @@ import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.QueuedMessage;
-import net.runelite.client.plugins.paistisuite.PaistiSuite;
-import net.runelite.client.plugins.paistisuite.framework.ClientFuture;
+import net.runelite.client.plugins.paistisuite.iPaistiSuite;
 import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Singleton;
 import java.awt.*;
-import java.util.List;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BooleanSupplier;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Singleton
@@ -78,8 +74,8 @@ public class PUtils {
     }
 
     public static Client getClient() {
-        if (PaistiSuite.getInstance() == null) return null;
-        return PaistiSuite.getInstance().client;
+        if (iPaistiSuite.getInstance() == null) return null;
+        return iPaistiSuite.getInstance().client;
     }
 
     public static Boolean logout(){
@@ -172,8 +168,8 @@ public class PUtils {
                 return task.call();
             }
 
-            if (PaistiSuite.getInstance() == null || PaistiSuite.getInstance().clientExecutor == null) return null;
-            return PaistiSuite.getInstance().clientExecutor.scheduleAndWait(task, name);
+            if (iPaistiSuite.getInstance() == null || iPaistiSuite.getInstance().clientExecutor == null) return null;
+            return iPaistiSuite.getInstance().clientExecutor.scheduleAndWait(task, name);
         } catch (Exception e){
             log.error("Exception in " + name);
             e.printStackTrace();
@@ -183,8 +179,8 @@ public class PUtils {
 
     public static void sendGameMessage(String message){
         log.info("Sent game msg: " + message);
-        if (PaistiSuite.getInstance().client.isClientThread()){
-            PaistiSuite.getInstance().chatMessageManager
+        if (iPaistiSuite.getInstance().client.isClientThread()){
+            iPaistiSuite.getInstance().chatMessageManager
                     .queue(QueuedMessage.builder()
                             .type(ChatMessageType.CONSOLE)
                             .runeLiteFormattedMessage(
@@ -194,8 +190,8 @@ public class PUtils {
                                             .build())
                             .build());
         } else {
-            PaistiSuite.getInstance().clientExecutor.schedule(() -> {
-                PaistiSuite.getInstance().chatMessageManager
+            iPaistiSuite.getInstance().clientExecutor.schedule(() -> {
+                iPaistiSuite.getInstance().chatMessageManager
                         .queue(QueuedMessage.builder()
                                 .type(ChatMessageType.CONSOLE)
                                 .runeLiteFormattedMessage(

@@ -9,7 +9,7 @@ import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.events.NpcLootReceived;
 import net.runelite.client.events.PlayerLootReceived;
 import net.runelite.client.game.ItemStack;
-import net.runelite.client.plugins.paistisuite.PaistiSuite;
+import net.runelite.client.plugins.paistisuite.iPaistiSuite;
 import net.runelite.client.plugins.paistisuite.api.types.PGroundItem;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -222,7 +222,7 @@ public class PGroundItems {
     private static PGroundItem buildGroundItem(final Tile tile, final TileItem item) {
         // Collect the data for the item
         final int itemId = item.getId();
-        final ItemComposition itemComposition = PaistiSuite.getInstance().itemManager.getItemComposition(itemId);
+        final ItemComposition itemComposition = iPaistiSuite.getInstance().itemManager.getItemComposition(itemId);
         final int realItemId = itemComposition.getNote() != -1 ? itemComposition.getLinkedNoteId() : itemId;
         final int alchPrice = itemComposition.getHaPrice();
 
@@ -293,7 +293,7 @@ public class PGroundItems {
                 .lootType(dropped ? PGroundItem.LootType.DROPPED : PGroundItem.LootType.UNKNOWN)
                 .spawnTime(Instant.now())
                 .stackable(itemComposition.isStackable())
-                .itemComposition(PaistiSuite.getInstance().itemManager.getItemComposition(itemId))
+                .itemComposition(iPaistiSuite.getInstance().itemManager.getItemComposition(itemId))
                 .build();
 
 
@@ -302,7 +302,7 @@ public class PGroundItems {
             groundItem.setHaPrice(1);
             groundItem.setGePrice(1);
         } else {
-            groundItem.setGePrice(PaistiSuite.getInstance().itemManager.getItemPrice(realItemId));
+            groundItem.setGePrice(iPaistiSuite.getInstance().itemManager.getItemPrice(realItemId));
         }
 
         return groundItem;

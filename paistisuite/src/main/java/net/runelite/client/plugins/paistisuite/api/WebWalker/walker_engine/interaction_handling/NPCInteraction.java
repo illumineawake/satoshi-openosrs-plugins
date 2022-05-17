@@ -6,7 +6,6 @@ import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.queries.NPCQuery;
 import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.client.plugins.paistisuite.PaistiSuite;
 import net.runelite.client.plugins.paistisuite.api.PPlayer;
 import net.runelite.client.plugins.paistisuite.api.PUtils;
 import net.runelite.client.plugins.paistisuite.api.PWidgets;

@@ -4,7 +4,6 @@ import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.TileObject;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.client.plugins.paistisuite.PaistiSuite;
 import net.runelite.client.plugins.paistisuite.api.types.PTileObject;
 
 public class PPlayer {

@@ -1,6 +1,5 @@
 package net.runelite.client.plugins.paistisuite.api;
 
-import kotlin.Pair;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.NPC;
 import net.runelite.api.ObjectComposition;
@@ -9,13 +8,11 @@ import net.runelite.api.queries.GameObjectQuery;
 import net.runelite.api.queries.GroundObjectQuery;
 import net.runelite.api.queries.NPCQuery;
 import net.runelite.api.queries.WallObjectQuery;
-import net.runelite.client.plugins.paistisuite.PaistiSuite;
+import net.runelite.client.plugins.paistisuite.iPaistiSuite;
 import net.runelite.client.plugins.paistisuite.api.types.PTileObject;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -37,7 +34,7 @@ public class PObjects {
 
     private static Future<ObjectComposition> getFutureObjectDef(TileObject go) {
         if (go == null) return null;
-        return PaistiSuite.getInstance().clientExecutor.schedule(() ->  getRealDefinition(go.getId()), "getObjectDef");
+        return iPaistiSuite.getInstance().clientExecutor.schedule(() ->  getRealDefinition(go.getId()), "getObjectDef");
     }
 
     public static Collection<PTileObject> getAllObjects()

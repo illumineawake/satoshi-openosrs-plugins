@@ -36,14 +36,14 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Extension
 @PluginDescriptor(
-        name = "PaistiSuite",
+        name = "iPaistiSuite",
         description = "Scripting framework by Paisti. Required by all other Paisti Plugins to work!",
         tags = {"npcs", "items"}
 )
 
 @Slf4j
 @Singleton
-public class PaistiSuite extends Plugin {
+public class iPaistiSuite extends Plugin {
     public final static String CONFIG_GROUP = "PaistiSuite";
 
     @Inject
@@ -72,13 +72,13 @@ public class PaistiSuite extends Plugin {
 
     PaistiSuitePanel panel;
     private NavigationButton navButton;
-    private static PaistiSuite instance;
+    private static iPaistiSuite instance;
     private static final ReentrantLock daxCredsLock = new ReentrantLock();
     private static DaxCredentialsProvider daxCredProvider;
     private static String daxKey;
     private static String daxSecret;
 
-    public static PaistiSuite getInstance() {
+    public static iPaistiSuite getInstance() {
         return instance;
     }
 
@@ -90,7 +90,7 @@ public class PaistiSuite extends Plugin {
     @Override
     protected void startUp() {
 
-        final BufferedImage icon = ImageUtil.loadImageResource(PaistiSuite.class, "logo.png");
+        final BufferedImage icon = ImageUtil.loadImageResource(iPaistiSuite.class, "logo.png");
 
         if (injector != null) {
             panel = injector.getInstance(PaistiSuitePanel.class);
@@ -196,7 +196,7 @@ public class PaistiSuite extends Plugin {
 
     @Subscribe
     private void onConfigChanged(ConfigChanged event) {
-        if (!event.getGroup().equals(PaistiSuite.CONFIG_GROUP)) return;
+        if (!event.getGroup().equals(iPaistiSuite.CONFIG_GROUP)) return;
         updateDaxCredProvider();
 
         if (SpiritTreeManager.getActiveSpiritTrees(client).isEmpty() && event.getKey().equals(PaistiSuiteConfig.SPIRIT_TREES)) {

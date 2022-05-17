@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.GameState;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.config.ConfigManager;
-import net.runelite.client.plugins.paistisuite.PaistiSuite;
+import net.runelite.client.plugins.paistisuite.iPaistiSuite;
 import net.runelite.client.plugins.paistisuite.api.WebWalker.wrappers.Keyboard;
 
 import java.awt.event.KeyEvent;
@@ -54,9 +54,9 @@ public class PLogin {
     }
 
     public static void login() {
-		ConfigManager configManager = PaistiSuite.getInstance().getConfigManager();
-		String username = configManager.getConfiguration(PaistiSuite.CONFIG_GROUP, "account-username");
-		String password = configManager.getConfiguration(PaistiSuite.CONFIG_GROUP, "account-password");
+		ConfigManager configManager = iPaistiSuite.getInstance().getConfigManager();
+		String username = configManager.getConfiguration(iPaistiSuite.CONFIG_GROUP, "account-username");
+		String password = configManager.getConfiguration(iPaistiSuite.CONFIG_GROUP, "account-password");
 		login(username, password);
 	}
 

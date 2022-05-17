@@ -2,10 +2,8 @@ package net.runelite.client.plugins.paistisuite.api.WebWalker.wrappers;
 
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.widgets.Widget;
-import net.runelite.client.plugins.paistisuite.PaistiSuite;
 import net.runelite.client.plugins.paistisuite.api.PInteraction;
 import net.runelite.client.plugins.paistisuite.api.PUtils;
-import net.runelite.client.plugins.paistisuite.api.PWidgets;
 
 import java.util.Arrays;
 import java.util.Objects;

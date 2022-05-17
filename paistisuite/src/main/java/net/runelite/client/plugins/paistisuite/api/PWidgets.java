@@ -3,7 +3,6 @@ package net.runelite.client.plugins.paistisuite.api;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.client.plugins.paistisuite.PaistiSuite;
 
 @Slf4j
 public class PWidgets {

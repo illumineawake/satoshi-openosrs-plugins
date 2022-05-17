@@ -1,6 +1,5 @@
 package net.runelite.client.plugins.paistisuite.api;
 
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.Point;
@@ -8,13 +7,12 @@ import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.client.plugins.paistisuite.PaistiSuite;
+import net.runelite.client.plugins.paistisuite.iPaistiSuite;
 import net.runelite.client.plugins.paistisuite.api.WebWalker.wrappers.RSTile;
 import net.runelite.client.plugins.paistisuite.framework.MenuInterceptor;
 import net.runelite.rs.api.RSClient;
 
 import java.awt.*;
-import java.io.IOException;
 
 @Slf4j
 public class PWalking {
@@ -53,7 +51,7 @@ public class PWalking {
 
         Point minimapPoint = null;
         try {
-            minimapPoint = PaistiSuite.getInstance().clientExecutor.scheduleAndWait(() -> Perspective.localToMinimap(PUtils.getClient(), localPoint), "LocalToMinimap");
+            minimapPoint = iPaistiSuite.getInstance().clientExecutor.scheduleAndWait(() -> Perspective.localToMinimap(PUtils.getClient(), localPoint), "LocalToMinimap");
         } catch (Exception e){
             log.error(e.toString());
             return false;

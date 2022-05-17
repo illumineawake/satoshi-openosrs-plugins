@@ -11,7 +11,7 @@ import net.runelite.api.Client;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
-import net.runelite.client.plugins.paistisuite.PaistiSuite;
+import net.runelite.client.plugins.paistisuite.iPaistiSuite;
 import net.runelite.client.plugins.paistisuite.PaistiSuiteConfig;
 
 import javax.inject.Inject;
@@ -96,7 +96,7 @@ public class SpiritTreeManager {
     }
 
     public void loadSpiritTrees() {
-        final String spiritTreeJSON = configManager.getConfiguration(PaistiSuite.CONFIG_GROUP, PaistiSuiteConfig.SPIRIT_TREES);
+        final String spiritTreeJSON = configManager.getConfiguration(iPaistiSuite.CONFIG_GROUP, PaistiSuiteConfig.SPIRIT_TREES);
 
         if (!Strings.isNullOrEmpty(spiritTreeJSON)) {
             final Map<String, Map<SpiritTree.Location, Boolean>> trees = gson.fromJson(spiritTreeJSON, new TypeToken<HashMap<String, HashMap<SpiritTree.Location, Boolean>>>() {
@@ -109,6 +109,6 @@ public class SpiritTreeManager {
 
     public void saveSpiritTrees() {
         final String json = gson.toJson(spiritTreeData);
-        configManager.setConfiguration(PaistiSuite.CONFIG_GROUP, PaistiSuiteConfig.SPIRIT_TREES, json);
+        configManager.setConfiguration(iPaistiSuite.CONFIG_GROUP, PaistiSuiteConfig.SPIRIT_TREES, json);
     }
 }

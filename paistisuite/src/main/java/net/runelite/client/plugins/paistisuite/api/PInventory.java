@@ -6,7 +6,7 @@ import net.runelite.api.*;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.api.widgets.WidgetItem;
-import net.runelite.client.plugins.paistisuite.PaistiSuite;
+import net.runelite.client.plugins.paistisuite.iPaistiSuite;
 import net.runelite.client.plugins.paistisuite.api.types.PItem;
 
 import java.awt.*;
@@ -20,21 +20,21 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PInventory {
     public static ItemComposition getItemDef(WidgetItem item) {
-        return PUtils.clientOnly(() -> PaistiSuite.getInstance().itemManager.getItemComposition(item.getId()), "getItemDef");
+        return PUtils.clientOnly(() -> iPaistiSuite.getInstance().itemManager.getItemComposition(item.getId()), "getItemDef");
     }
 
     public static ItemComposition getItemDef(int id) {
-        return PUtils.clientOnly(() -> PaistiSuite.getInstance().itemManager.getItemComposition(id), "getItemDef");
+        return PUtils.clientOnly(() -> iPaistiSuite.getInstance().itemManager.getItemComposition(id), "getItemDef");
     }
 
     public static ItemComposition getItemDef(Item item) {
-        return PUtils.clientOnly(() -> PaistiSuite.getInstance().itemManager.getItemComposition(item.getId()), "getItemDef");
+        return PUtils.clientOnly(() -> iPaistiSuite.getInstance().itemManager.getItemComposition(item.getId()), "getItemDef");
     }
 
     private static Future<ItemComposition> getFutureItemDef(WidgetItem item) {
         if (item == null) return null;
 
-        return PaistiSuite.getInstance().clientExecutor.schedule(() -> PaistiSuite.getInstance().itemManager.getItemComposition(item.getId()), "getItemDef");
+        return iPaistiSuite.getInstance().clientExecutor.schedule(() -> iPaistiSuite.getInstance().itemManager.getItemComposition(item.getId()), "getItemDef");
     }
 
     private static WidgetItem createWidgetItem(Widget item) {
@@ -97,7 +97,7 @@ public class PInventory {
         if (PUtils.getClient().isClientThread()) {
             PUtils.getClient().runScript(6009, 9764864, 28, 1, -1);
         } else {
-            PaistiSuite.getInstance().clientExecutor.schedule(() -> PUtils.getClient().runScript(6009, 9764864, 28, 1, -1), "runScript6009");
+            iPaistiSuite.getInstance().clientExecutor.schedule(() -> PUtils.getClient().runScript(6009, 9764864, 28, 1, -1), "runScript6009");
         }
     }
 
@@ -244,7 +244,7 @@ public class PInventory {
             items = PUtils.getClient().getItemContainer(InventoryID.EQUIPMENT).getItems();
         } else {
             try {
-                items = PaistiSuite.getInstance().clientExecutor.scheduleAndWait(() -> {
+                items = iPaistiSuite.getInstance().clientExecutor.scheduleAndWait(() -> {
                     return PUtils.getClient().getItemContainer(InventoryID.EQUIPMENT).getItems();
                 }, "getEquippedItems");
             } catch (Exception e) {
