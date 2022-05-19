@@ -37,6 +37,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Extension
 @PluginDescriptor(
         name = "iPaistiSuite",
+        hidden = true,
         description = "Scripting framework by Paisti. Required by all other Paisti Plugins to work!",
         tags = {"npcs", "items"}
 )
@@ -90,7 +91,7 @@ public class iPaistiSuite extends Plugin {
     @Override
     protected void startUp() {
 
-        final BufferedImage icon = ImageUtil.loadImageResource(iPaistiSuite.class, "logo.png");
+        /*final BufferedImage icon = ImageUtil.loadImageResource(iPaistiSuite.class, "logo.png");
 
         if (injector != null) {
             panel = injector.getInstance(PaistiSuitePanel.class);
@@ -102,7 +103,7 @@ public class iPaistiSuite extends Plugin {
                     .build();
 
             clientToolbar.addNavigation(navButton);
-        }
+        }*/
 
         spiritTreeManager.loadSpiritTrees();
 
